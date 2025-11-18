@@ -1,0 +1,7 @@
+Generic single-database configuration with an async dbapi.
+
+A generic template for use with a single database. This template uses
+an async dbapi.
+
+
+
