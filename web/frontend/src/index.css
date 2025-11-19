@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Wavesurfer.js styles */
+wave {
+  cursor: pointer;
+}
+
+wave:hover {
+  opacity: 0.9;
+}
+
 /* Professional Studio Design System
    Dark blue theme matching login page
    All colors MUST be HSL.

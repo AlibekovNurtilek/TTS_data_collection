@@ -6,10 +6,44 @@ from app.database import get_db
 from app.dependencies import get_current_user, verify_book_access
 from app.models.user import User, UserRole
 from app.schemas.chunk import SpeakerChunkResponse, SpeakerChunksPaginatedResponse
+from app.schemas.book import BookResponse
 from app.services.chunk_service import ChunkService
+from app.services.book_service import BookService
 from app.repositories.recording_repository import RecordingRepository
 
 router = APIRouter()
+
+
+@router.get(
+    "/me/books/{book_id}",
+    response_model=BookResponse,
+    status_code=status.HTTP_200_OK
+)
+async def get_my_book(
+    book_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Получить информацию о книге для текущего спикера.
+    Доступно только для спикеров, которым назначена книга.
+    
+    - **book_id**: ID книги
+    """
+    # Проверяем, что пользователь является спикером
+    if current_user.role != UserRole.SPEAKER:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only speakers can access this endpoint"
+        )
+    
+    # Проверяем доступ к книге
+    verify_book_access(book_id, current_user, db)
+    
+    book_service = BookService(db)
+    book = book_service.get_book_by_id(book_id)
+    
+    return BookResponse.model_validate(book)
 
 
 @router.get(
@@ -20,7 +54,7 @@ router = APIRouter()
 async def get_my_book_chunks(
     book_id: int,
     pageNumber: int = Query(default=1, ge=1, description="Номер страницы"),
-    limit: int = Query(default=100, ge=1, le=1000, description="Количество записей на странице"),
+    limit: int = Query(default=50, ge=1, le=1000, description="Количество записей на странице"),
     search: Optional[str] = Query(default=None, description="Поиск по тексту чанка"),
     filter: Optional[Literal["all", "recorded", "not_recorded"]] = Query(
         default="all",
@@ -125,4 +159,70 @@ async def get_my_book_chunks(
         pageNumber=pageNumber,
         limit=limit
     )
+
+
+@router.get(
+    "/me/books/{book_id}/next-chunk",
+    response_model=SpeakerChunkResponse,
+    status_code=status.HTTP_200_OK
+)
+async def get_next_chunk_for_recording(
+    book_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Получить следующий не записанный чанк для записи (караоке режим).
+    Возвращает первый чанк с минимальным order_index, который еще не записан этим спикером.
+    Доступно только для спикеров, которым назначена книга.
+    
+    - **book_id**: ID книги
+    
+    Если все чанки записаны, возвращает 404.
+    """
+    # Проверяем, что пользователь является спикером
+    if current_user.role != UserRole.SPEAKER:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only speakers can access this endpoint"
+        )
+    
+    # Проверяем доступ к книге
+    verify_book_access(book_id, current_user, db)
+    
+    from app.repositories.chunk_repository import ChunkRepository
+    chunk_repo = ChunkRepository()
+    recording_repo = RecordingRepository()
+    
+    # Получаем следующий не записанный чанк
+    chunk = chunk_repo.get_next_unrecorded_chunk(db, book_id, current_user.id)
+    
+    if not chunk:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="All chunks for this book have been recorded"
+        )
+    
+    # Проверяем наличие записи (на всякий случай, хотя метод уже фильтрует)
+    recording = recording_repo.get_by_chunk_and_speaker(
+        db,
+        chunk.id,
+        current_user.id
+    )
+    
+    # Формируем ответ
+    from app.schemas.recording import RecordingResponse
+    speaker_chunk = SpeakerChunkResponse(
+        id=chunk.id,
+        book_id=chunk.book_id,
+        text=chunk.text,
+        order_index=chunk.order_index,
+        estimated_duration=chunk.estimated_duration,
+        created_at=chunk.created_at,
+        updated_at=chunk.updated_at,
+        is_recorded_by_me=recording is not None,
+        my_recording=RecordingResponse.model_validate(recording) if recording else None
+    )
+    
+    return speaker_chunk
 

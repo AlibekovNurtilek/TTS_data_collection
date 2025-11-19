@@ -7,7 +7,8 @@ import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { speakersService } from "@/services/speakers";
 import { recordingsService } from "@/services/recordings";
-import { booksService } from "@/services/books";
+import { Waveform } from "@/components/Waveform";
+import { RecordingWaveform } from "@/components/RecordingWaveform";
 import {
   ArrowLeft,
   Mic,
@@ -16,26 +17,27 @@ import {
   Pause,
   Upload,
   CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
 } from "lucide-react";
 import type { SpeakerChunk, Book } from "@/types";
 
 export default function RecordBook() {
   const { bookId } = useParams<{ bookId: string }>();
   const [book, setBook] = useState<Book | null>(null);
-  const [chunks, setChunks] = useState<SpeakerChunk[]>([]);
-  const [currentChunkIndex, setCurrentChunkIndex] = useState(0);
+  const [chunk, setChunk] = useState<SpeakerChunk | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [allRecorded, setAllRecorded] = useState(false);
+  const [stream, setStream] = useState<MediaStream | null>(null);
+  const [recordingDuration, setRecordingDuration] = useState(0);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
-  const audioRef = useRef<HTMLAudioElement>(null);
+  const recordingStartTimeRef = useRef<number>(0);
+  const durationIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -43,19 +45,34 @@ export default function RecordBook() {
   useEffect(() => {
     if (bookId) {
       loadBookData();
-      loadChunks();
+      loadNextChunk();
     }
   }, [bookId]);
 
+  // Update recording duration while recording
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.onended = () => setIsPlaying(false);
+    if (isRecording) {
+      durationIntervalRef.current = setInterval(() => {
+        setRecordingDuration((Date.now() - recordingStartTimeRef.current) / 1000);
+      }, 100);
+    } else {
+      if (durationIntervalRef.current) {
+        clearInterval(durationIntervalRef.current);
+        durationIntervalRef.current = null;
+      }
     }
-  }, [audioUrl]);
+
+    return () => {
+      if (durationIntervalRef.current) {
+        clearInterval(durationIntervalRef.current);
+      }
+    };
+  }, [isRecording]);
+
 
   const loadBookData = async () => {
     try {
-      const bookData = await booksService.getBook(parseInt(bookId!));
+      const bookData = await speakersService.getMyBook(parseInt(bookId!));
       setBook(bookData);
     } catch (error) {
       toast({
@@ -66,17 +83,24 @@ export default function RecordBook() {
     }
   };
 
-  const loadChunks = async () => {
+  const loadNextChunk = async () => {
     try {
-      // Загружаем все чанки для записи (без пагинации, так как нужно видеть все)
-      const response = await speakersService.getMyBookChunks(parseInt(bookId!), 1, 1000);
-      setChunks(response.items);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to load chunks",
-        variant: "destructive",
-      });
+      setLoading(true);
+      setAllRecorded(false);
+      const nextChunk = await speakersService.getNextChunk(parseInt(bookId!));
+      setChunk(nextChunk);
+      clearRecording();
+    } catch (error: any) {
+      if (error?.response?.status === 404) {
+        setAllRecorded(true);
+        setChunk(null);
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to load next chunk",
+          variant: "destructive",
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -84,8 +108,9 @@ export default function RecordBook() {
 
   const startRecording = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+      const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      setStream(audioStream);
+      const mediaRecorder = new MediaRecorder(audioStream);
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
 
@@ -100,11 +125,15 @@ export default function RecordBook() {
         setAudioBlob(blob);
         const url = URL.createObjectURL(blob);
         setAudioUrl(url);
-        stream.getTracks().forEach((track) => track.stop());
+        // Останавливаем stream после остановки записи
+        audioStream.getTracks().forEach((track) => track.stop());
+        setStream(null);
       };
 
       mediaRecorder.start();
       setIsRecording(true);
+      setRecordingDuration(0);
+      recordingStartTimeRef.current = Date.now();
     } catch (error) {
       toast({
         title: "Error",
@@ -121,38 +150,30 @@ export default function RecordBook() {
     }
   };
 
-  const togglePlayback = () => {
-    if (!audioRef.current) return;
-
-    if (isPlaying) {
-      audioRef.current.pause();
-    } else {
-      audioRef.current.play();
-    }
+  const handlePlayPause = () => {
     setIsPlaying(!isPlaying);
   };
 
+  const handleSeek = (time: number) => {
+    // Wavesurfer сам обрабатывает seek, нам нужно только обновить состояние если нужно
+    console.log("Seek to:", time);
+  };
+
   const handleUpload = async () => {
-    if (!audioBlob || !chunks[currentChunkIndex]) return;
+    if (!audioBlob || !chunk) return;
 
     setUploading(true);
     try {
       const file = new File([audioBlob], `recording-${Date.now()}.wav`, { type: "audio/wav" });
-      await recordingsService.uploadRecording(chunks[currentChunkIndex].id, file);
+      await recordingsService.uploadRecording(chunk.id, file);
 
       toast({
         title: "Success",
-        description: "Recording uploaded successfully",
+        description: "Recording saved! Loading next chunk...",
       });
 
-      // Reload chunks to get updated recording status
-      await loadChunks();
-
-      // Clear current recording and move to next chunk
-      clearRecording();
-      if (currentChunkIndex < chunks.length - 1) {
-        setCurrentChunkIndex(currentChunkIndex + 1);
-      }
+      // Автоматически загружаем следующий чанк
+      await loadNextChunk();
     } catch (error) {
       toast({
         title: "Error",
@@ -169,20 +190,7 @@ export default function RecordBook() {
     setAudioBlob(null);
     setAudioUrl(null);
     setIsPlaying(false);
-  };
-
-  const goToPreviousChunk = () => {
-    if (currentChunkIndex > 0) {
-      clearRecording();
-      setCurrentChunkIndex(currentChunkIndex - 1);
-    }
-  };
-
-  const goToNextChunk = () => {
-    if (currentChunkIndex < chunks.length - 1) {
-      clearRecording();
-      setCurrentChunkIndex(currentChunkIndex + 1);
-    }
+    setRecordingDuration(0);
   };
 
   if (loading) {
@@ -191,16 +199,58 @@ export default function RecordBook() {
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading...</p>
+            <p className="text-muted-foreground">Loading next chunk...</p>
           </div>
         </div>
       </Layout>
     );
   }
 
-  const currentChunk = chunks[currentChunkIndex];
-  const recordedCount = chunks.filter((c) => c.is_recorded_by_me).length;
-  const progress = chunks.length > 0 ? (recordedCount / chunks.length) * 100 : 0;
+  if (allRecorded) {
+    return (
+      <Layout>
+        <div className="min-h-full bg-gradient-to-b from-background to-muted/20">
+          <div className="px-6 py-8">
+            <Button 
+              variant="ghost" 
+              onClick={() => navigate("/")} 
+              className="mb-6 gap-2 text-muted-foreground hover:text-foreground"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to My Books
+            </Button>
+
+            <Card className="studio-shadow-lg border-2 max-w-2xl mx-auto">
+              <CardContent className="p-16 text-center">
+                <div className="p-4 bg-success/10 rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+                  <CheckCircle2 className="h-10 w-10 text-success" />
+                </div>
+                <h2 className="text-3xl font-bold text-foreground mb-4">All Done! 🎉</h2>
+                <p className="text-muted-foreground text-lg mb-6">
+                  You have successfully recorded all chunks for "{book?.title}".
+                </p>
+                <Button onClick={() => navigate("/")} size="lg">
+                  Back to My Books
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!chunk) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center h-full">
+          <div className="text-center">
+            <p className="text-muted-foreground">No chunk available</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -219,162 +269,122 @@ export default function RecordBook() {
 
             <div className="mb-6">
               <h1 className="text-4xl font-bold text-foreground mb-3 tracking-tight">{book?.title}</h1>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-muted-foreground">
-                    Progress: {recordedCount} / {chunks.length} chunks recorded
+              <div className="flex items-center gap-2">
+                <div className="px-4 py-2 bg-primary/10 border border-primary/20 rounded-lg">
+                  <span className="text-sm font-semibold text-primary">
+                    Chunk #{chunk.order_index}
                   </span>
-                  <span className="text-sm font-semibold text-foreground">{Math.round(progress)}%</span>
-                </div>
-                <div className="relative">
-                  <Progress value={progress} className="h-3" />
-                  <div 
-                    className="absolute top-0 left-0 h-3 bg-primary/20 rounded-full transition-all duration-300"
-                    style={{ width: `${progress}%` }}
-                  />
                 </div>
               </div>
             </div>
           </div>
 
-          {currentChunk && (
-            <div className="space-y-6">
-              {/* Chunk Card */}
-              <Card className="studio-shadow-lg border-2">
-                <CardContent className="p-8">
-                  {/* Chunk Header */}
-                  <div className="flex items-center justify-between mb-6 pb-4 border-b border-border">
-                    <div className="flex items-center gap-3">
-                      <div className="px-4 py-2 bg-primary/10 border border-primary/20 rounded-lg">
-                        <span className="text-sm font-semibold text-primary">
-                          Chunk #{currentChunk.order_index} of {chunks.length}
-                        </span>
-                      </div>
-                      {currentChunk.is_recorded_by_me && (
-                        <div className="flex items-center gap-2 px-3 py-1.5 bg-success/10 border border-success/20 rounded-lg">
-                          <CheckCircle2 className="h-4 w-4 text-success" />
-                          <span className="text-sm font-medium text-success">Recorded</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Text Content */}
-                  <div className="bg-gradient-to-br from-muted/50 to-muted/30 p-8 rounded-xl mb-8 border border-border/50">
-                    <p className="text-xl leading-relaxed text-foreground font-normal tracking-wide">
-                      {currentChunk.text}
-                    </p>
-                  </div>
-
-                  {/* Recording Controls */}
-                  <div className="space-y-6">
-                    {/* Main Control Button */}
-                    <div className="flex items-center justify-center">
-                      {!isRecording && !audioBlob && (
-                        <Button 
-                          onClick={startRecording} 
-                          size="lg" 
-                          className="gap-3 h-14 px-8 text-base font-semibold shadow-lg hover:shadow-xl transition-all"
-                        >
-                          <Mic className="h-6 w-6" />
-                          Start Recording
-                        </Button>
-                      )}
-
-                      {isRecording && (
-                        <Button 
-                          onClick={stopRecording} 
-                          size="lg" 
-                          variant="destructive" 
-                          className="gap-3 h-14 px-8 text-base font-semibold shadow-lg hover:shadow-xl transition-all animate-pulse"
-                        >
-                          <Square className="h-6 w-6" />
-                          Stop Recording
-                        </Button>
-                      )}
-
-                      {audioBlob && !isRecording && (
-                        <div className="flex items-center gap-3">
-                          <Button 
-                            onClick={togglePlayback} 
-                            size="lg" 
-                            variant="secondary" 
-                            className="gap-3 h-14 px-6 text-base font-semibold"
-                          >
-                            {isPlaying ? (
-                              <>
-                                <Pause className="h-5 w-5" />
-                                Pause
-                              </>
-                            ) : (
-                              <>
-                                <Play className="h-5 w-5" />
-                                Playback
-                              </>
-                            )}
-                          </Button>
-                          <Button 
-                            onClick={clearRecording} 
-                            size="lg" 
-                            variant="outline"
-                            className="h-14 px-6 text-base font-semibold border-2"
-                          >
-                            Re-record
-                          </Button>
-                          <Button
-                            onClick={handleUpload}
-                            size="lg"
-                            className="gap-3 h-14 px-8 text-base font-semibold shadow-lg hover:shadow-xl transition-all"
-                            disabled={uploading}
-                          >
-                            <Upload className="h-5 w-5" />
-                            {uploading ? "Uploading..." : "Save Recording"}
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Recording Indicator */}
-                    {isRecording && (
-                      <div className="flex items-center justify-center gap-3 py-4">
-                        <div className="flex items-center gap-2">
-                          <div className="h-4 w-4 bg-recording rounded-full animate-pulse shadow-lg shadow-recording/50" />
-                          <span className="text-base font-semibold text-recording">Recording in progress...</span>
-                        </div>
-                      </div>
-                    )}
-
-                    {audioUrl && <audio ref={audioRef} src={audioUrl} className="hidden" />}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Navigation */}
-              <div className="flex items-center justify-between pt-4">
-                <Button
-                  variant="outline"
-                  onClick={goToPreviousChunk}
-                  disabled={currentChunkIndex === 0}
-                  className="gap-2 h-11 px-6 font-medium border-2"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  Previous Chunk
-                </Button>
-                <div className="text-sm text-muted-foreground font-medium">
-                  {currentChunkIndex + 1} / {chunks.length}
-                </div>
-                <Button
-                  variant="outline"
-                  onClick={goToNextChunk}
-                  disabled={currentChunkIndex === chunks.length - 1}
-                  className="gap-2 h-11 px-6 font-medium border-2"
-                >
-                  Next Chunk
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
+          {/* Chunk Card */}
+          <Card className="studio-shadow-lg border-2 max-w-4xl mx-auto">
+            <CardContent className="p-8">
+              {/* Text Content */}
+              <div className="bg-gradient-to-br from-muted/50 to-muted/30 p-8 rounded-xl mb-8 border border-border/50">
+                <p className="text-2xl leading-relaxed text-foreground font-normal tracking-wide text-center">
+                  {chunk.text}
+                </p>
               </div>
-            </div>
-          )}
+
+              {/* Waveform Visualization */}
+              <div className="mb-6">
+                {isRecording && stream && (
+                  <RecordingWaveform
+                    stream={stream}
+                    isRecording={isRecording}
+                    duration={recordingDuration}
+                  />
+                )}
+                
+                {audioBlob && !isRecording && audioUrl && (
+                  <div className="space-y-2">
+                    <Waveform
+                      audioUrl={audioUrl}
+                      isPlaying={isPlaying}
+                      onPlayPause={handlePlayPause}
+                      onSeek={handleSeek}
+                      height={120}
+                      waveColor="#3b82f6"
+                      progressColor="#2563eb"
+                      cursorColor="#1e40af"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Recording Controls */}
+              <div className="space-y-6">
+                {/* Main Control Button */}
+                <div className="flex items-center justify-center">
+                  {!isRecording && !audioBlob && (
+                    <Button 
+                      onClick={startRecording} 
+                      size="lg" 
+                      className="gap-3 h-16 px-10 text-lg font-semibold shadow-lg hover:shadow-xl transition-all"
+                    >
+                      <Mic className="h-7 w-7" />
+                      Start Recording
+                    </Button>
+                  )}
+
+                  {isRecording && (
+                    <Button 
+                      onClick={stopRecording} 
+                      size="lg" 
+                      variant="destructive" 
+                      className="gap-3 h-16 px-10 text-lg font-semibold shadow-lg hover:shadow-xl transition-all animate-pulse"
+                    >
+                      <Square className="h-7 w-7" />
+                      Stop Recording
+                    </Button>
+                  )}
+
+                  {audioBlob && !isRecording && (
+                    <div className="flex items-center gap-4">
+                      <Button 
+                        onClick={handlePlayPause} 
+                        size="lg" 
+                        variant="secondary" 
+                        className="gap-3 h-16 px-8 text-lg font-semibold"
+                      >
+                        {isPlaying ? (
+                          <>
+                            <Pause className="h-6 w-6" />
+                            Pause
+                          </>
+                        ) : (
+                          <>
+                            <Play className="h-6 w-6" />
+                            Playback
+                          </>
+                        )}
+                      </Button>
+                      <Button 
+                        onClick={clearRecording} 
+                        size="lg" 
+                        variant="outline"
+                        className="h-16 px-8 text-lg font-semibold border-2"
+                      >
+                        Re-record
+                      </Button>
+                      <Button
+                        onClick={handleUpload}
+                        size="lg"
+                        className="gap-3 h-16 px-10 text-lg font-semibold shadow-lg hover:shadow-xl transition-all"
+                        disabled={uploading}
+                      >
+                        <Upload className="h-6 w-6" />
+                        {uploading ? "Saving..." : "Save & Next"}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </Layout>

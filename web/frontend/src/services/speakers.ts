@@ -1,11 +1,19 @@
 import { api } from "@/lib/api";
-import type { SpeakerChunk, SpeakerChunksPaginatedResponse } from "@/types";
+import type { SpeakerChunk, SpeakerChunksPaginatedResponse, Book } from "@/types";
 
 export const speakersService = {
+  async getMyBook(bookId: number): Promise<Book> {
+    return api.get<Book>(`/speakers/me/books/${bookId}`);
+  },
+
+  async getNextChunk(bookId: number): Promise<SpeakerChunk> {
+    return api.get<SpeakerChunk>(`/speakers/me/books/${bookId}/next-chunk`);
+  },
+
   async getMyBookChunks(
     bookId: number,
     pageNumber = 1,
-    limit = 100,
+    limit = 50,
     search?: string,
     filter?: "all" | "recorded" | "not_recorded"
   ): Promise<SpeakerChunksPaginatedResponse> {
