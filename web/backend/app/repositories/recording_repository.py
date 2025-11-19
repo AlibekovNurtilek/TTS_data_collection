@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from app.models.recording import Recording
 
 
@@ -16,12 +16,18 @@ class RecordingRepository:
         return db.query(Recording).filter(Recording.id == recording_id).first()
     
     @staticmethod
-    def get_by_chunk(db: Session, chunk_id: int) -> List[Recording]:
-        return db.query(Recording).filter(Recording.chunk_id == chunk_id).all()
+    def get_by_chunk(db: Session, chunk_id: int, page_number: int = 1, limit: int = 100) -> Tuple[List[Recording], int]:
+        skip = (page_number - 1) * limit
+        total = db.query(Recording).filter(Recording.chunk_id == chunk_id).count()
+        items = db.query(Recording).filter(Recording.chunk_id == chunk_id).offset(skip).limit(limit).all()
+        return items, total
     
     @staticmethod
-    def get_by_speaker(db: Session, speaker_id: int) -> List[Recording]:
-        return db.query(Recording).filter(Recording.speaker_id == speaker_id).all()
+    def get_by_speaker(db: Session, speaker_id: int, page_number: int = 1, limit: int = 100) -> Tuple[List[Recording], int]:
+        skip = (page_number - 1) * limit
+        total = db.query(Recording).filter(Recording.speaker_id == speaker_id).count()
+        items = db.query(Recording).filter(Recording.speaker_id == speaker_id).offset(skip).limit(limit).all()
+        return items, total
     
     @staticmethod
     def get_by_chunk_and_speaker(

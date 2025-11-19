@@ -20,15 +20,15 @@ export default function Dashboard() {
   const loadStats = async () => {
     try {
       const [users, books, categories] = await Promise.all([
-        usersService.getUsers(),
-        booksService.getBooks(),
-        categoriesService.getCategories(),
+        usersService.getUsers(1, 1), // Get first page with limit 1 to get total count
+        booksService.getBooks(1, 1),
+        categoriesService.getCategories(1, 1),
       ]);
 
       setStats({
-        users: users.length,
-        books: books.length,
-        categories: categories.length,
+        users: users.total,
+        books: books.total,
+        categories: categories.total,
       });
     } catch (error) {
       console.error("Failed to load stats:", error);
@@ -43,8 +43,7 @@ export default function Dashboard() {
 
   return (
     <Layout>
-      <div className="min-h-full bg-gradient-to-b from-background to-muted/20">
-        <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="min-h-full bg-gradient-to-b from-background to-muted/20 px-6 py-8">
           <div className="mb-10">
             <h1 className="text-4xl font-bold text-foreground mb-2 tracking-tight">Dashboard</h1>
             <p className="text-muted-foreground text-lg">Overview of your TTS studio</p>
@@ -71,7 +70,6 @@ export default function Dashboard() {
               );
             })}
           </div>
-        </div>
       </div>
     </Layout>
   );

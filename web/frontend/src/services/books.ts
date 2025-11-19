@@ -1,20 +1,32 @@
 import { api } from "@/lib/api";
-import type { Book } from "@/types";
+import type { Book, BooksPaginatedResponse } from "@/types";
 
 export const booksService = {
-  async getBooks(skip = 0, limit = 100, categoryId?: number): Promise<Book[]> {
+  async getBooks(
+    pageNumber = 1,
+    limit = 100,
+    categoryId?: number,
+    speakerId?: number,
+    search?: string
+  ): Promise<BooksPaginatedResponse> {
     const params = new URLSearchParams({
-      skip: skip.toString(),
+      pageNumber: pageNumber.toString(),
       limit: limit.toString(),
     });
     if (categoryId) {
       params.append("category_id", categoryId.toString());
     }
-    return api.get<Book[]>(`/books?${params}`);
+    if (speakerId) {
+      params.append("speaker_id", speakerId.toString());
+    }
+    if (search) {
+      params.append("search", search);
+    }
+    return api.get<BooksPaginatedResponse>(`/admin/books?${params}`);
   },
 
   async getBook(bookId: number): Promise<Book> {
-    return api.get<Book>(`/books/${bookId}`);
+    return api.get<Book>(`/admin/books/${bookId}`);
   },
 
   async uploadBook(file: File, categoryId: number, title?: string): Promise<Book> {
@@ -24,10 +36,10 @@ export const booksService = {
     if (title) {
       formData.append("title", title);
     }
-    return api.uploadFile<Book>("/books/upload", formData);
+    return api.uploadFile<Book>("/admin/books/upload", formData);
   },
 
   async deleteBook(bookId: number): Promise<void> {
-    return api.delete(`/books/${bookId}`);
+    return api.delete(`/admin/books/${bookId}`);
   },
 };

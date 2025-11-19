@@ -1,8 +1,8 @@
 from pydantic import BaseModel
 from datetime import datetime
-from typing import Optional, List, Generic, TypeVar
-
-T = TypeVar('T')
+from typing import Optional
+from app.schemas.pagination import PaginatedResponse
+from app.schemas.recording import RecordingResponse
 
 
 class ChunkResponse(BaseModel):
@@ -11,8 +11,6 @@ class ChunkResponse(BaseModel):
     text: str
     order_index: int
     estimated_duration: Optional[int]
-    is_recorded: bool
-    audio_file_path: Optional[str]
     created_at: datetime
     updated_at: Optional[datetime]
 
@@ -20,20 +18,29 @@ class ChunkResponse(BaseModel):
         from_attributes = True
 
 
-class PaginatedResponse(BaseModel, Generic[T]):
-    """Схема для пагинированного ответа"""
-    items: List[T]
-    total: int
-    skip: int
-    limit: int
-    has_more: bool
+class ChunksPaginatedResponse(PaginatedResponse[ChunkResponse]):
+    """Пагинированный ответ для чанков"""
+    pass
+
+
+class SpeakerChunkResponse(BaseModel):
+    """Ответ для спикера с информацией о чанке и его записи"""
+    id: int
+    book_id: int
+    text: str
+    order_index: int
+    estimated_duration: Optional[int]
+    created_at: datetime
+    updated_at: Optional[datetime]
+    is_recorded_by_me: bool
+    my_recording: Optional[RecordingResponse] = None
 
     class Config:
         from_attributes = True
 
 
-class ChunksPaginatedResponse(PaginatedResponse[ChunkResponse]):
-    """Пагинированный ответ для чанков"""
+class SpeakerChunksPaginatedResponse(PaginatedResponse[SpeakerChunkResponse]):
+    """Пагинированный ответ для чанков спикера"""
     pass
 
 

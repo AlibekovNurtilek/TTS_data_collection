@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from app.models.user import UserRole
+from app.schemas.pagination import PaginatedResponse
 
 
 class UserCreate(BaseModel):
@@ -21,6 +22,11 @@ class UserResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class UsersPaginatedResponse(PaginatedResponse[UserResponse]):
+    """Пагинированный ответ для пользователей"""
+    pass
 
 
 

@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Tuple
 from app.models.user import User
 
 
@@ -13,8 +13,11 @@ class UserRepository:
         return db.query(User).filter(User.id == user_id).first()
     
     @staticmethod
-    def get_all(db: Session, skip: int = 0, limit: int = 100) -> List[User]:
-        return db.query(User).offset(skip).limit(limit).all()
+    def get_all(db: Session, page_number: int = 1, limit: int = 100) -> Tuple[List[User], int]:
+        skip = (page_number - 1) * limit
+        total = db.query(User).count()
+        items = db.query(User).offset(skip).limit(limit).all()
+        return items, total
     
     @staticmethod
     def create(db: Session, user: User) -> User:

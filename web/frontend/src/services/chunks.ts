@@ -1,12 +1,25 @@
 import { api } from "@/lib/api";
-import type { Chunk, ChunksPaginatedResponse } from "@/types";
+import type { Chunk, ChunksPaginatedResponse, SpeakerChunk, SpeakerChunksPaginatedResponse } from "@/types";
 
 export const chunksService = {
-  async getBookChunks(bookId: number, skip = 0, limit = 100): Promise<ChunksPaginatedResponse> {
-    return api.get<ChunksPaginatedResponse>(`/chunks/books/${bookId}/chunks?skip=${skip}&limit=${limit}`);
+  // Admin endpoints
+  async getBookChunks(
+    bookId: number,
+    pageNumber = 1,
+    limit = 100,
+    search?: string
+  ): Promise<ChunksPaginatedResponse> {
+    const params = new URLSearchParams({
+      pageNumber: pageNumber.toString(),
+      limit: limit.toString(),
+    });
+    if (search) {
+      params.append("search", search);
+    }
+    return api.get<ChunksPaginatedResponse>(`/admin/chunks/books/${bookId}/chunks?${params}`);
   },
 
   async getChunk(chunkId: number): Promise<Chunk> {
-    return api.get<Chunk>(`/chunks/${chunkId}`);
+    return api.get<Chunk>(`/admin/chunks/${chunkId}`);
   },
 };

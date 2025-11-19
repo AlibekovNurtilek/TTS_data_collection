@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional
+from app.schemas.pagination import PaginatedResponse
 
 
 class RecordingResponse(BaseModel):
@@ -19,4 +20,9 @@ class RecordingResponse(BaseModel):
 class RecordingCreate(BaseModel):
     chunk_id: int
     speaker_id: int
+
+
+class RecordingsPaginatedResponse(PaginatedResponse[RecordingResponse]):
+    """Пагинированный ответ для записей"""
+    pass
 

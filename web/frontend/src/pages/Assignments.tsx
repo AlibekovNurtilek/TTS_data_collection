@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,19 +24,49 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { assignmentsService } from "@/services/assignments";
 import { booksService } from "@/services/books";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, X, UserCheck } from "lucide-react";
+import { cn, getAvatarGradient } from "@/lib/utils";
 import type { Book, User, BookWithSpeakers } from "@/types";
+import { Pagination } from "@/components/Pagination";
+import { useAppSelector } from "@/store/hooks";
+
+const PAGINATION_KEY = "assignments";
+const DEFAULT_LIMIT = 20;
 
 export default function Assignments() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const paginationState = useAppSelector((state) => state.pagination[PAGINATION_KEY]);
+  
+  const pageNumber = paginationState?.pageNumber || parseInt(searchParams.get("page") || "1", 10);
+  const limit = paginationState?.limit || DEFAULT_LIMIT;
+
   const [booksWithSpeakers, setBooksWithSpeakers] = useState<BookWithSpeakers[]>([]);
   const [allBooks, setAllBooks] = useState<Book[]>([]);
   const [allSpeakers, setAllSpeakers] = useState<User[]>([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [assignmentToDelete, setAssignmentToDelete] = useState<{
+    bookId: number;
+    bookTitle: string;
+    speakerId: number;
+    speakerUsername: string;
+  } | null>(null);
   const [formData, setFormData] = useState({
     book_id: "",
     speaker_id: "",
@@ -44,19 +75,21 @@ export default function Assignments() {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [pageNumber, limit]);
 
   const loadData = async () => {
     try {
-      const [books, speakers] = await Promise.all([
-        booksService.getBooks(),
-        assignmentsService.getAllSpeakers(),
+      setLoading(true);
+      const [booksData, speakersData] = await Promise.all([
+        booksService.getBooks(pageNumber, limit),
+        assignmentsService.getAllSpeakers(1, 1000), // Загружаем всех спикеров для выпадающего списка
       ]);
-      setAllBooks(books);
-      setAllSpeakers(speakers);
+      setAllBooks(booksData.items);
+      setAllSpeakers(speakersData.items);
+      setTotal(booksData.total);
 
       const booksWithSpeakersData = await Promise.all(
-        books.map((book) => assignmentsService.getBookSpeakers(book.id))
+        booksData.items.map((book) => assignmentsService.getBookSpeakers(book.id))
       );
       setBooksWithSpeakers(booksWithSpeakersData);
     } catch (error) {
@@ -68,6 +101,10 @@ export default function Assignments() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePageChange = (newPageNumber: number) => {
+    setSearchParams({ page: newPageNumber.toString() });
   };
 
   const handleAssign = async (e: React.FormEvent) => {
@@ -93,13 +130,19 @@ export default function Assignments() {
     }
   };
 
-  const handleUnassign = async (bookId: number, speakerId: number) => {
+  const handleUnassign = async () => {
+    if (!assignmentToDelete) return;
     try {
-      await assignmentsService.unassignBook(bookId, speakerId);
+      await assignmentsService.unassignBook(
+        assignmentToDelete.bookId,
+        assignmentToDelete.speakerId
+      );
       toast({
         title: "Success",
         description: "Assignment removed successfully",
       });
+      setDeleteDialogOpen(false);
+      setAssignmentToDelete(null);
       loadData();
     } catch (error) {
       toast({
@@ -108,6 +151,21 @@ export default function Assignments() {
         variant: "destructive",
       });
     }
+  };
+
+  const openDeleteDialog = (
+    bookId: number,
+    bookTitle: string,
+    speakerId: number,
+    speakerUsername: string
+  ) => {
+    setAssignmentToDelete({
+      bookId,
+      bookTitle,
+      speakerId,
+      speakerUsername,
+    });
+    setDeleteDialogOpen(true);
   };
 
   if (loading) {
@@ -127,9 +185,14 @@ export default function Assignments() {
     <Layout>
       <div className="p-8">
         <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Assignments</h1>
-            <p className="text-muted-foreground mt-1">Assign books to speakers</p>
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-gradient-to-br from-[#0066cc] to-[#0052a3] rounded-xl shadow-lg">
+              <UserCheck className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Assignments</h1>
+              <p className="text-gray-500 mt-1">Assign books to speakers</p>
+            </div>
           </div>
           <Dialog
             open={dialogOpen}
@@ -141,7 +204,7 @@ export default function Assignments() {
             }}
           >
             <DialogTrigger asChild>
-              <Button className="gap-2">
+              <Button className="gap-2 bg-gradient-to-r from-[#0066cc] to-[#0052a3] hover:from-[#0052a3] hover:to-[#004999] text-white shadow-md hover:shadow-lg transition-all font-semibold">
                 <Plus className="h-4 w-4" />
                 New Assignment
               </Button>
@@ -197,53 +260,92 @@ export default function Assignments() {
           </Dialog>
         </div>
 
-        <div className="bg-card rounded-lg border border-border">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>Book</TableHead>
-                <TableHead>Assigned Speakers</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+              <TableRow className="bg-gray-50 hover:bg-gray-50">
+                <TableHead className="font-semibold text-gray-700">Book</TableHead>
+                <TableHead className="font-semibold text-gray-700">Assigned Speakers</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {booksWithSpeakers.map((book) => (
-                <TableRow key={book.id}>
-                  <TableCell className="font-semibold">{book.title}</TableCell>
+                <TableRow key={book.id} className="hover:bg-gray-50 transition-colors">
+                  <TableCell className="font-semibold text-gray-900">{book.title}</TableCell>
                   <TableCell>
                     {book.assigned_speakers.length > 0 ? (
                       <div className="flex flex-wrap gap-2">
                         {book.assigned_speakers.map((speaker) => (
-                          <span
+                          <div
                             key={speaker.id}
-                            className="text-xs bg-secondary text-secondary-foreground px-2 py-1 rounded"
+                            className="inline-flex items-center gap-1.5 bg-blue-50 border border-blue-200 rounded-md px-3 py-1.5 group hover:bg-blue-100 transition-colors"
                           >
-                            {speaker.username}
-                          </span>
+                            <div className={cn(
+                              "w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-semibold bg-gradient-to-br",
+                              getAvatarGradient(speaker.username)
+                            )}>
+                              {speaker.username.charAt(0).toUpperCase()}
+                            </div>
+                            <span className="text-sm font-medium text-gray-700">{speaker.username}</span>
+                            <button
+                              onClick={() =>
+                                openDeleteDialog(book.id, book.title, speaker.id, speaker.username)
+                              }
+                              className="ml-1 p-0.5 rounded hover:bg-red-100 text-gray-400 hover:text-red-600 transition-colors opacity-0 group-hover:opacity-100"
+                              title="Remove assignment"
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
                         ))}
                       </div>
                     ) : (
-                      <span className="text-muted-foreground text-sm">No speakers assigned</span>
+                      <span className="text-gray-400 text-sm italic">No speakers assigned</span>
                     )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {book.assigned_speakers.map((speaker) => (
-                      <Button
-                        key={speaker.id}
-                        variant="destructive"
-                        size="sm"
-                        className="ml-2"
-                        onClick={() => handleUnassign(book.id, speaker.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    ))}
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </div>
+
+        {booksWithSpeakers.length > 0 && (
+          <div className="mt-6">
+            <Pagination
+              paginationKey={PAGINATION_KEY}
+              total={total}
+              pageNumber={pageNumber}
+              limit={limit}
+              onPageChange={handlePageChange}
+            />
+          </div>
+        )}
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-xl font-bold text-gray-900">
+                Remove Assignment
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-gray-600">
+                Are you sure you want to remove <span className="font-semibold text-gray-900">"{assignmentToDelete?.speakerUsername}"</span> from book{" "}
+                <span className="font-semibold text-gray-900">"{assignmentToDelete?.bookTitle}"</span>?
+                <br />
+                <span className="text-red-600 font-medium">This action cannot be undone.</span>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="border-gray-300">Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleUnassign}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                Remove Assignment
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </Layout>
   );

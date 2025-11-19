@@ -1,27 +1,31 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, Query
 from sqlalchemy.orm import Session
-from typing import List
 
 from app.database import get_db
 from app.dependencies import get_current_admin
 from app.models.user import User
-from app.schemas.user import UserCreate, UserResponse
+from app.schemas.user import UserCreate, UserResponse, UsersPaginatedResponse
 from app.services.user_service import UserService
 
 router = APIRouter()
 
 
-@router.get("/", response_model=List[UserResponse], status_code=status.HTTP_200_OK)
+@router.get("/", response_model=UsersPaginatedResponse, status_code=status.HTTP_200_OK)
 async def get_users(
-    skip: int = 0,
-    limit: int = 100,
+    pageNumber: int = Query(default=1, ge=1, description="Номер страницы"),
+    limit: int = Query(default=100, ge=1, le=1000, description="Количество записей на странице"),
     db: Session = Depends(get_db),
     current_admin: User = Depends(get_current_admin)
 ):
-    """Получить список всех пользователей (только для админа)"""
+    """Получить список всех пользователей с пагинацией (только для админа)"""
     user_service = UserService(db)
-    users = user_service.get_all_users(skip=skip, limit=limit)
-    return [UserResponse.model_validate(user) for user in users]
+    users, total = user_service.get_all_users(page_number=pageNumber, limit=limit)
+    return UsersPaginatedResponse(
+        items=[UserResponse.model_validate(user) for user in users],
+        total=total,
+        pageNumber=pageNumber,
+        limit=limit
+    )
 
 
 @router.get("/{user_id}", response_model=UserResponse, status_code=status.HTTP_200_OK)

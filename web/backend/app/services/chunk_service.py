@@ -17,11 +17,12 @@ class ChunkService:
     def get_chunks_by_book(
         self,
         book_id: int,
-        skip: int = 0,
-        limit: int = 100
+        page_number: int = 1,
+        limit: int = 100,
+        search: str | None = None
     ) -> Tuple[List[Chunk], int]:
         """
-        Получить чанки книги с пагинацией.
+        Получить чанки книги с пагинацией и поиском.
         
         Returns:
             Tuple[List[Chunk], int]: (список чанков, общее количество чанков)
@@ -34,13 +35,14 @@ class ChunkService:
                 detail="Book not found",
             )
         
-        # Получаем чанки с пагинацией
-        chunks = self.chunk_repo.get_by_book(self.db, book_id, skip=skip, limit=limit)
-        
-        # Получаем общее количество чанков
-        total_count = self.chunk_repo.count_by_book(self.db, book_id)
-        
-        return chunks, total_count
+        # Получаем чанки с пагинацией и поиском
+        return self.chunk_repo.get_by_book(
+            self.db,
+            book_id,
+            page_number=page_number,
+            limit=limit,
+            search=search
+        )
     
     def get_chunk_by_id(self, chunk_id: int) -> Chunk:
         """Получить чанк по ID"""

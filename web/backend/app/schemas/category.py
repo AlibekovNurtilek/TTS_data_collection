@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional
+from app.schemas.pagination import PaginatedResponse
 
 
 class CategoryCreate(BaseModel):
@@ -22,6 +23,11 @@ class CategoryResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class CategoriesPaginatedResponse(PaginatedResponse[CategoryResponse]):
+    """Пагинированный ответ для категорий"""
+    pass
 
 
 

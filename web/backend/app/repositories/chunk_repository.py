@@ -1,12 +1,32 @@
 from sqlalchemy.orm import Session
-from typing import List
+from sqlalchemy import or_
+from typing import List, Tuple, Optional
 from app.models.chunk import Chunk
 
 
 class ChunkRepository:
     @staticmethod
-    def get_by_book(db: Session, book_id: int, skip: int = 0, limit: int = 1000) -> List[Chunk]:
-        return db.query(Chunk).filter(Chunk.book_id == book_id).order_by(Chunk.order_index).offset(skip).limit(limit).all()
+    def get_by_book(
+        db: Session,
+        book_id: int,
+        page_number: int = 1,
+        limit: int = 100,
+        search: Optional[str] = None
+    ) -> Tuple[List[Chunk], int]:
+        skip = (page_number - 1) * limit
+        query = db.query(Chunk).filter(Chunk.book_id == book_id)
+        
+        # Поиск по тексту чанка
+        if search:
+            search_pattern = f"%{search}%"
+            query = query.filter(Chunk.text.ilike(search_pattern))
+        
+        # Подсчет общего количества с учетом фильтров
+        total = query.count()
+        
+        # Получение элементов с пагинацией и сортировкой
+        items = query.order_by(Chunk.order_index).offset(skip).limit(limit).all()
+        return items, total
     
     @staticmethod
     def get_by_id(db: Session, chunk_id: int) -> Chunk | None:

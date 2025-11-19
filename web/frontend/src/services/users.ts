@@ -1,20 +1,20 @@
 import { api } from "@/lib/api";
-import type { User, UserCreate } from "@/types";
+import type { User, UserCreate, UsersPaginatedResponse } from "@/types";
 
 export const usersService = {
-  async getUsers(skip = 0, limit = 100): Promise<User[]> {
-    return api.get<User[]>(`/users?skip=${skip}&limit=${limit}`);
+  async getUsers(pageNumber = 1, limit = 100): Promise<UsersPaginatedResponse> {
+    return api.get<UsersPaginatedResponse>(`/admin/users?pageNumber=${pageNumber}&limit=${limit}`);
   },
 
   async getUser(userId: number): Promise<User> {
-    return api.get<User>(`/users/${userId}`);
+    return api.get<User>(`/admin/users/${userId}`);
   },
 
   async createUser(userData: UserCreate): Promise<User> {
-    return api.post<User>("/users", userData);
+    return api.post<User>("/admin/users", userData);
   },
 
   async deleteUser(userId: number): Promise<void> {
-    return api.delete(`/users/${userId}`);
+    return api.delete(`/admin/users/${userId}`);
   },
 };

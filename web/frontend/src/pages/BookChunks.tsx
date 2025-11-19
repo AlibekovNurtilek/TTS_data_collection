@@ -1,32 +1,67 @@
-import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useEffect, useState, useRef } from "react";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { chunksService } from "@/services/chunks";
 import { booksService } from "@/services/books";
-import { ArrowLeft, CheckCircle2, Circle, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, Circle, Search, X } from "lucide-react";
 import type { Chunk, Book } from "@/types";
+import { Pagination } from "@/components/Pagination";
+import { useAppSelector } from "@/store/hooks";
+import { Input } from "@/components/ui/input";
+
+const DEFAULT_LIMIT = 20;
 
 export default function BookChunks() {
   const { bookId } = useParams<{ bookId: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const PAGINATION_KEY = `bookChunks-${bookId}`;
+  const paginationState = useAppSelector((state) => state.pagination[PAGINATION_KEY]);
+  
+  const pageNumber = paginationState?.pageNumber || parseInt(searchParams.get("page") || "1", 10);
+  const limit = paginationState?.limit || DEFAULT_LIMIT;
+  const [searchInput, setSearchInput] = useState<string>(searchParams.get("search") || "");
+  const [searchQuery, setSearchQuery] = useState<string>(searchParams.get("search") || "");
+
   const [book, setBook] = useState<Book | null>(null);
   const [chunks, setChunks] = useState<Chunk[]>([]);
   const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(0);
-  const [hasMore, setHasMore] = useState(false);
   const [total, setTotal] = useState(0);
-  const pageSize = 20;
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (bookId) {
       loadBookData();
+    }
+  }, [bookId]);
+
+  // Debounce для поиска
+  useEffect(() => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    searchTimeoutRef.current = setTimeout(() => {
+      setSearchQuery(searchInput);
+      setSearchParams({ page: "1" });
+    }, 500); // Задержка 500ms
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [searchInput]);
+
+  useEffect(() => {
+    if (bookId) {
       loadChunks();
     }
-  }, [bookId, page]);
+  }, [bookId, pageNumber, limit, searchQuery]);
 
   const loadBookData = async () => {
     try {
@@ -43,13 +78,14 @@ export default function BookChunks() {
 
   const loadChunks = async () => {
     try {
+      setLoading(true);
       const response = await chunksService.getBookChunks(
         parseInt(bookId!),
-        page * pageSize,
-        pageSize
+        pageNumber,
+        limit,
+        searchQuery || undefined
       );
       setChunks(response.items);
-      setHasMore(response.has_more);
       setTotal(response.total);
     } catch (error) {
       toast({
@@ -60,6 +96,20 @@ export default function BookChunks() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePageChange = (newPageNumber: number) => {
+    setSearchParams({ page: newPageNumber.toString() });
+  };
+
+  const handleSearch = (value: string) => {
+    setSearchInput(value);
+  };
+
+  const clearSearch = () => {
+    setSearchInput("");
+    setSearchQuery("");
+    setSearchParams({ page: "1" });
   };
 
   if (loading) {
@@ -75,8 +125,6 @@ export default function BookChunks() {
     );
   }
 
-  const recordedCount = chunks.filter((c) => c.is_recorded).length;
-
   return (
     <Layout>
       <div className="p-8">
@@ -88,8 +136,29 @@ export default function BookChunks() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">{book?.title}</h1>
           <p className="text-muted-foreground">
-            Total chunks: {total} | Recorded: {recordedCount} / {chunks.length} on this page
+            Total chunks: {total} | Showing: {chunks.length} on this page
           </p>
+        </div>
+
+        {/* Search */}
+        <div className="mb-6">
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search chunks by text..."
+              value={searchInput}
+              onChange={(e) => handleSearch(e.target.value)}
+              className="pl-10 pr-10 h-11"
+            />
+            {searchInput && (
+              <button
+                onClick={clearSearch}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="space-y-4">
@@ -97,11 +166,7 @@ export default function BookChunks() {
             <Card key={chunk.id}>
               <CardContent className="p-6">
                 <div className="flex items-start gap-4">
-                  {chunk.is_recorded ? (
-                    <CheckCircle2 className="h-5 w-5 text-recorded flex-shrink-0 mt-1" />
-                  ) : (
-                    <Circle className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-1" />
-                  )}
+                  <Circle className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-1" />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 mb-2">
                       <span className="text-xs font-mono bg-muted px-2 py-1 rounded">
@@ -124,29 +189,15 @@ export default function BookChunks() {
           ))}
         </div>
 
-        {(page > 0 || hasMore) && (
-          <div className="flex items-center justify-between mt-6">
-            <Button
-              variant="outline"
-              onClick={() => setPage((p) => Math.max(0, p - 1))}
-              disabled={page === 0}
-              className="gap-2"
-            >
-              <ChevronLeft className="h-4 w-4" />
-              Previous
-            </Button>
-            <span className="text-sm text-muted-foreground">
-              Page {page + 1} of {Math.ceil(total / pageSize)}
-            </span>
-            <Button
-              variant="outline"
-              onClick={() => setPage((p) => p + 1)}
-              disabled={!hasMore}
-              className="gap-2"
-            >
-              Next
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+        {chunks.length > 0 && (
+          <div className="mt-6">
+            <Pagination
+              paginationKey={PAGINATION_KEY}
+              total={total}
+              pageNumber={pageNumber}
+              limit={limit}
+              onPageChange={handlePageChange}
+            />
           </div>
         )}
       </div>

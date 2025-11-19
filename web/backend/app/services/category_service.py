@@ -12,8 +12,8 @@ class CategoryService:
         self.db = db
         self.category_repo = CategoryRepository()
     
-    def get_all_categories(self, skip: int = 0, limit: int = 100) -> List[Category]:
-        return self.category_repo.get_all(self.db, skip=skip, limit=limit)
+    def get_all_categories(self, page_number: int = 1, limit: int = 100) -> tuple[List[Category], int]:
+        return self.category_repo.get_all(self.db, page_number=page_number, limit=limit)
     
     def get_category_by_id(self, category_id: int) -> Category:
         category = self.category_repo.get_by_id(self.db, category_id)

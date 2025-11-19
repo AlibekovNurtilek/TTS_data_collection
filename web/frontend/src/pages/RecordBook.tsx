@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import { chunksService } from "@/services/chunks";
+import { speakersService } from "@/services/speakers";
 import { recordingsService } from "@/services/recordings";
 import { booksService } from "@/services/books";
 import {
@@ -19,12 +19,12 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import type { Chunk, Book } from "@/types";
+import type { SpeakerChunk, Book } from "@/types";
 
 export default function RecordBook() {
   const { bookId } = useParams<{ bookId: string }>();
   const [book, setBook] = useState<Book | null>(null);
-  const [chunks, setChunks] = useState<Chunk[]>([]);
+  const [chunks, setChunks] = useState<SpeakerChunk[]>([]);
   const [currentChunkIndex, setCurrentChunkIndex] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
@@ -68,7 +68,8 @@ export default function RecordBook() {
 
   const loadChunks = async () => {
     try {
-      const response = await chunksService.getBookChunks(parseInt(bookId!), 0, 1000);
+      // Загружаем все чанки для записи (без пагинации, так как нужно видеть все)
+      const response = await speakersService.getMyBookChunks(parseInt(bookId!), 1, 1000);
       setChunks(response.items);
     } catch (error) {
       toast({
@@ -144,10 +145,8 @@ export default function RecordBook() {
         description: "Recording uploaded successfully",
       });
 
-      // Mark chunk as recorded
-      const updatedChunks = [...chunks];
-      updatedChunks[currentChunkIndex].is_recorded = true;
-      setChunks(updatedChunks);
+      // Reload chunks to get updated recording status
+      await loadChunks();
 
       // Clear current recording and move to next chunk
       clearRecording();
@@ -200,13 +199,13 @@ export default function RecordBook() {
   }
 
   const currentChunk = chunks[currentChunkIndex];
-  const recordedCount = chunks.filter((c) => c.is_recorded).length;
-  const progress = (recordedCount / chunks.length) * 100;
+  const recordedCount = chunks.filter((c) => c.is_recorded_by_me).length;
+  const progress = chunks.length > 0 ? (recordedCount / chunks.length) * 100 : 0;
 
   return (
     <Layout>
       <div className="min-h-full bg-gradient-to-b from-background to-muted/20">
-        <div className="max-w-5xl mx-auto px-6 py-8">
+        <div className="px-6 py-8">
           {/* Header */}
           <div className="mb-8">
             <Button 
@@ -251,7 +250,7 @@ export default function RecordBook() {
                           Chunk #{currentChunk.order_index} of {chunks.length}
                         </span>
                       </div>
-                      {currentChunk.is_recorded && (
+                      {currentChunk.is_recorded_by_me && (
                         <div className="flex items-center gap-2 px-3 py-1.5 bg-success/10 border border-success/20 rounded-lg">
                           <CheckCircle2 className="h-4 w-4 text-success" />
                           <span className="text-sm font-medium text-success">Recorded</span>

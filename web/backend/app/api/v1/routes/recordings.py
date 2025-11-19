@@ -1,11 +1,10 @@
-from fastapi import APIRouter, Depends, status, UploadFile, File, Form
+from fastapi import APIRouter, Depends, status, UploadFile, File, Form, Query, HTTPException
 from sqlalchemy.orm import Session
-from typing import List
 
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.models.user import User, UserRole
-from app.schemas.recording import RecordingResponse
+from app.schemas.recording import RecordingResponse, RecordingsPaginatedResponse
 from app.services.recording_service import RecordingService
 
 router = APIRouter()
@@ -50,18 +49,25 @@ async def upload_recording(
 
 @router.get(
     "/chunks/{chunk_id}",
-    response_model=List[RecordingResponse],
+    response_model=RecordingsPaginatedResponse,
     status_code=status.HTTP_200_OK
 )
 async def get_chunk_recordings(
     chunk_id: int,
+    pageNumber: int = Query(default=1, ge=1, description="Номер страницы"),
+    limit: int = Query(default=100, ge=1, le=1000, description="Количество записей на странице"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Получить все записи для чанка"""
+    """Получить записи для чанка с пагинацией"""
     recording_service = RecordingService(db)
-    recordings = recording_service.get_recordings_by_chunk(chunk_id)
-    return [RecordingResponse.model_validate(rec) for rec in recordings]
+    recordings, total = recording_service.get_recordings_by_chunk(chunk_id, page_number=pageNumber, limit=limit)
+    return RecordingsPaginatedResponse(
+        items=[RecordingResponse.model_validate(rec) for rec in recordings],
+        total=total,
+        pageNumber=pageNumber,
+        limit=limit
+    )
 
 
 @router.get(

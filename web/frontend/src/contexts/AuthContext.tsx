@@ -31,8 +31,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const login = async (username: string, password: string) => {
+    // Пробрасываем ошибку дальше, если логин не удался
     await authService.login({ username, password });
-    // После логина проверяем авторизацию через /me для синхронизации состояния
+    // После успешного логина проверяем авторизацию через /me для синхронизации состояния
     await checkAuth();
   };
 

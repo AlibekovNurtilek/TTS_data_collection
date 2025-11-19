@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional
+from app.schemas.pagination import PaginatedResponse
 
 
 class BookResponse(BaseModel):
@@ -23,6 +24,11 @@ class BookWithChunksResponse(BookResponse):
 class BookUpload(BaseModel):
     category_id: int
     title: Optional[str] = None
+
+
+class BooksPaginatedResponse(PaginatedResponse[BookResponse]):
+    """Пагинированный ответ для книг"""
+    pass
 
 
 

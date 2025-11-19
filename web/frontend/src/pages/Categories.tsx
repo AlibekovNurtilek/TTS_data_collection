@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,9 +34,21 @@ import { useToast } from "@/hooks/use-toast";
 import { categoriesService } from "@/services/categories";
 import { Plus, Trash2, Edit } from "lucide-react";
 import type { Category } from "@/types";
+import { Pagination } from "@/components/Pagination";
+import { useAppSelector } from "@/store/hooks";
+
+const PAGINATION_KEY = "categories";
+const DEFAULT_LIMIT = 20;
 
 export default function Categories() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const paginationState = useAppSelector((state) => state.pagination[PAGINATION_KEY]);
+  
+  const pageNumber = paginationState?.pageNumber || parseInt(searchParams.get("page") || "1", 10);
+  const limit = paginationState?.limit || DEFAULT_LIMIT;
+
   const [categories, setCategories] = useState<Category[]>([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
@@ -49,12 +62,14 @@ export default function Categories() {
 
   useEffect(() => {
     loadCategories();
-  }, []);
+  }, [pageNumber, limit]);
 
   const loadCategories = async () => {
     try {
-      const data = await categoriesService.getCategories();
-      setCategories(data);
+      setLoading(true);
+      const data = await categoriesService.getCategories(pageNumber, limit);
+      setCategories(data.items);
+      setTotal(data.total);
     } catch (error) {
       toast({
         title: "Error",
@@ -64,6 +79,10 @@ export default function Categories() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePageChange = (newPageNumber: number) => {
+    setSearchParams({ page: newPageNumber.toString() });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -238,6 +257,18 @@ export default function Categories() {
             </TableBody>
           </Table>
         </div>
+
+        {categories.length > 0 && (
+          <div className="mt-6">
+            <Pagination
+              paginationKey={PAGINATION_KEY}
+              total={total}
+              pageNumber={pageNumber}
+              limit={limit}
+              onPageChange={handlePageChange}
+            />
+          </div>
+        )}
 
         <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <AlertDialogContent>

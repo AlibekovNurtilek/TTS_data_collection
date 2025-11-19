@@ -114,12 +114,6 @@ class RecordingService:
             )
             recording = self.recording_repo.create(self.db, recording)
         
-        # Обновляем флаг is_recorded в чанке
-        chunk.is_recorded = True
-        chunk.audio_file_path = audio_file_path
-        self.db.commit()
-        self.db.refresh(chunk)
-        
         return recording
     
     def get_recording_by_id(self, recording_id: int) -> Recording:
@@ -132,11 +126,11 @@ class RecordingService:
             )
         return recording
     
-    def get_recordings_by_chunk(self, chunk_id: int) -> list[Recording]:
-        """Получить все записи для чанка"""
-        return self.recording_repo.get_by_chunk(self.db, chunk_id)
+    def get_recordings_by_chunk(self, chunk_id: int, page_number: int = 1, limit: int = 100) -> tuple[list[Recording], int]:
+        """Получить записи для чанка с пагинацией"""
+        return self.recording_repo.get_by_chunk(self.db, chunk_id, page_number=page_number, limit=limit)
     
-    def get_recordings_by_speaker(self, speaker_id: int) -> list[Recording]:
-        """Получить все записи спикера"""
-        return self.recording_repo.get_by_speaker(self.db, speaker_id)
+    def get_recordings_by_speaker(self, speaker_id: int, page_number: int = 1, limit: int = 100) -> tuple[list[Recording], int]:
+        """Получить записи спикера с пагинацией"""
+        return self.recording_repo.get_by_speaker(self.db, speaker_id, page_number=page_number, limit=limit)
 

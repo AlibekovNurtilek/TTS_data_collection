@@ -1,6 +1,5 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, Query
 from sqlalchemy.orm import Session
-from typing import List
 
 from app.database import get_db
 from app.dependencies import get_current_admin, get_current_user
@@ -12,7 +11,7 @@ from app.schemas.book_assignment import (
     SpeakerWithBooksResponse,
     SpeakerInfo
 )
-from app.schemas.user import UserResponse
+from app.schemas.user import UserResponse, UsersPaginatedResponse
 from app.services.book_assignment_service import BookAssignmentService
 
 router = APIRouter()
@@ -84,23 +83,22 @@ async def get_speaker_with_books(
     return assignment_service.get_speaker_with_books(speaker_id)
 
 
-@router.get("/speakers", response_model=List[UserResponse], status_code=status.HTTP_200_OK)
+@router.get("/speakers", response_model=UsersPaginatedResponse, status_code=status.HTTP_200_OK)
 async def get_all_speakers(
+    pageNumber: int = Query(default=1, ge=1, description="Номер страницы"),
+    limit: int = Query(default=100, ge=1, le=1000, description="Количество записей на странице"),
     db: Session = Depends(get_db),
     current_admin: User = Depends(get_current_admin)
 ):
-    """Получить список всех спикеров (только для админа)"""
+    """Получить список всех спикеров с пагинацией (только для админа)"""
     assignment_service = BookAssignmentService(db)
-    speakers = assignment_service.get_all_speakers()
-    return [UserResponse.model_validate(speaker) for speaker in speakers]
+    speakers, total = assignment_service.get_all_speakers(page_number=pageNumber, limit=limit)
+    return UsersPaginatedResponse(
+        items=[UserResponse.model_validate(speaker) for speaker in speakers],
+        total=total,
+        pageNumber=pageNumber,
+        limit=limit
+    )
 
 
-@router.get("/my-books", response_model=SpeakerWithBooksResponse, status_code=status.HTTP_200_OK)
-async def get_my_assigned_books(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """Получить книги, назначенные текущему пользователю (для всех авторизованных пользователей)"""
-    assignment_service = BookAssignmentService(db)
-    return assignment_service.get_user_with_books(current_user.id)
 

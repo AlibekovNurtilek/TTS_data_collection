@@ -41,19 +41,28 @@ export interface Chunk {
   text: string;
   order_index: number;
   estimated_duration: number | null;
-  is_recorded: boolean;
-  audio_file_path: string | null;
   created_at: string;
   updated_at: string | null;
 }
 
-export interface ChunksPaginatedResponse {
-  items: Chunk[];
-  total: number;
-  skip: number;
-  limit: number;
-  has_more: boolean;
+export interface SpeakerChunk extends Chunk {
+  is_recorded_by_me: boolean;
+  my_recording: Recording | null;
 }
+
+export interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  pageNumber: number;
+  limit: number;
+}
+
+export interface ChunksPaginatedResponse extends PaginatedResponse<Chunk> {}
+export interface SpeakerChunksPaginatedResponse extends PaginatedResponse<SpeakerChunk> {}
+export interface BooksPaginatedResponse extends PaginatedResponse<Book> {}
+export interface UsersPaginatedResponse extends PaginatedResponse<User> {}
+export interface CategoriesPaginatedResponse extends PaginatedResponse<Category> {}
+export interface RecordingsPaginatedResponse extends PaginatedResponse<Recording> {}
 
 export interface Recording {
   id: number;

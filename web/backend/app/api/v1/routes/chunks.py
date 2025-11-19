@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import Optional
 
 from app.database import get_db
-from app.dependencies import get_current_user, verify_book_access
+from app.dependencies import get_current_admin
 from app.models.user import User
 from app.schemas.chunk import ChunkResponse, ChunksPaginatedResponse
 from app.services.chunk_service import ChunkService
@@ -18,31 +18,33 @@ router = APIRouter()
 )
 async def get_book_chunks(
     book_id: int,
-    skip: int = Query(default=0, ge=0, description="Количество пропущенных записей"),
-    limit: int = Query(default=100, ge=1, le=1000, description="Максимальное количество записей"),
+    pageNumber: int = Query(default=1, ge=1, description="Номер страницы"),
+    limit: int = Query(default=100, ge=1, le=1000, description="Количество записей на странице"),
+    search: Optional[str] = Query(default=None, description="Поиск по тексту чанка"),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_admin: User = Depends(get_current_admin)
 ):
     """
-    Получить чанки книги по ID с пагинацией.
-    Доступно для админов и спикеров, которым назначена книга.
+    Получить чанки книги по ID с пагинацией и поиском (только для админа).
     
     - **book_id**: ID книги
-    - **skip**: Количество пропущенных записей (для пагинации)
-    - **limit**: Максимальное количество записей в ответе (максимум 1000)
+    - **pageNumber**: Номер страницы (начинается с 1)
+    - **limit**: Количество записей на странице (максимум 1000)
+    - **search**: Поиск по тексту чанка
     """
-    # Проверяем доступ к книге
-    verify_book_access(book_id, current_user, db)
-    
     chunk_service = ChunkService(db)
-    chunks, total_count = chunk_service.get_chunks_by_book(book_id, skip=skip, limit=limit)
+    chunks, total_count = chunk_service.get_chunks_by_book(
+        book_id,
+        page_number=pageNumber,
+        limit=limit,
+        search=search
+    )
     
     return ChunksPaginatedResponse(
         items=[ChunkResponse.model_validate(chunk) for chunk in chunks],
         total=total_count,
-        skip=skip,
-        limit=limit,
-        has_more=(skip + limit) < total_count
+        pageNumber=pageNumber,
+        limit=limit
     )
 
 
@@ -54,17 +56,13 @@ async def get_book_chunks(
 async def get_chunk(
     chunk_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_admin: User = Depends(get_current_admin)
 ):
     """
-    Получить чанк по ID.
-    Доступно для админов и спикеров, которым назначена книга, содержащая этот чанк.
+    Получить чанк по ID (только для админа).
     """
     chunk_service = ChunkService(db)
     chunk = chunk_service.get_chunk_by_id(chunk_id)
-    
-    # Проверяем доступ к книге, к которой принадлежит чанк
-    verify_book_access(chunk.book_id, current_user, db)
     
     return ChunkResponse.model_validate(chunk)
 

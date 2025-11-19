@@ -52,8 +52,7 @@ export default function SpeakerBooks() {
 
   return (
     <Layout>
-      <div className="min-h-full bg-gradient-to-b from-background to-muted/20">
-        <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="min-h-full bg-gradient-to-b from-background to-muted/20 px-6 py-8">
           <div className="mb-10">
             <h1 className="text-4xl font-bold text-foreground mb-2 tracking-tight">My Books</h1>
             <p className="text-muted-foreground text-lg">Books assigned to you for recording</p>
@@ -107,7 +106,6 @@ export default function SpeakerBooks() {
               </CardContent>
             </Card>
           )}
-        </div>
       </div>
     </Layout>
   );

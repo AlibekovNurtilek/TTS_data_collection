@@ -1,0 +1,25 @@
+import { api } from "@/lib/api";
+import type { SpeakerChunk, SpeakerChunksPaginatedResponse } from "@/types";
+
+export const speakersService = {
+  async getMyBookChunks(
+    bookId: number,
+    pageNumber = 1,
+    limit = 100,
+    search?: string,
+    filter?: "all" | "recorded" | "not_recorded"
+  ): Promise<SpeakerChunksPaginatedResponse> {
+    const params = new URLSearchParams({
+      pageNumber: pageNumber.toString(),
+      limit: limit.toString(),
+    });
+    if (search) {
+      params.append("search", search);
+    }
+    if (filter) {
+      params.append("filter", filter);
+    }
+    return api.get<SpeakerChunksPaginatedResponse>(`/speakers/me/books/${bookId}/chunks?${params}`);
+  },
+};
+

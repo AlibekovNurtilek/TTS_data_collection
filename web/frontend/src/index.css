@@ -3,37 +3,37 @@
 @tailwind utilities;
 
 /* Professional Studio Design System
-   Light milky white background with red-orange accents
+   Dark blue theme matching login page
    All colors MUST be HSL.
 */
 
 @layer base {
   :root {
-    /* Light milky white background - основной фон */
-    --background: 42 20% 98%;
+    /* Light background - светлый фон для контента */
+    --background: 0 0% 98%;
     --foreground: 0 0% 15%;
 
-    /* Cards - слегка более темный белый с легким оттенком */
-    --card: 42 15% 99%;
+    /* Cards - белые карточки */
+    --card: 0 0% 100%;
     --card-foreground: 0 0% 15%;
 
-    --popover: 42 15% 99%;
+    --popover: 0 0% 100%;
     --popover-foreground: 0 0% 15%;
 
-    /* Red-orange primary - красно-оранжевый акцент */
-    --primary: 12 85% 55%;
+    /* Dark blue primary - темно-синий акцент (#0066cc) */
+    --primary: 210 100% 40%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary - мягкий серый */
-    --secondary: 42 10% 92%;
+    /* Secondary - светлый серый */
+    --secondary: 0 0% 92%;
     --secondary-foreground: 0 0% 20%;
 
     /* Muted - очень светлый серый */
-    --muted: 42 8% 95%;
+    --muted: 0 0% 95%;
     --muted-foreground: 0 0% 45%;
 
-    /* Accent - красно-оранжевый */
-    --accent: 12 85% 55%;
+    /* Accent - темно-синий */
+    --accent: 210 100% 40%;
     --accent-foreground: 0 0% 100%;
 
     /* Destructive - красный */
@@ -48,22 +48,22 @@
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
 
-    /* Borders - светлые серые с легким красно-оранжевым оттенком */
-    --border: 12 15% 88%;
-    --input: 12 15% 88%;
-    --ring: 12 85% 55%;
+    /* Borders - светлые серые */
+    --border: 0 0% 88%;
+    --input: 0 0% 88%;
+    --ring: 210 100% 40%;
 
     --radius: 0.75rem;
 
-    /* Sidebar - чистый белый с легким оттенком */
-    --sidebar-background: 42 12% 99%;
-    --sidebar-foreground: 0 0% 15%;
-    --sidebar-primary: 12 85% 55%;
+    /* Sidebar - темно-синий градиент как на странице логина */
+    --sidebar-background: 210 100% 35%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 210 100% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 12 20% 94%;
-    --sidebar-accent-foreground: 0 0% 20%;
-    --sidebar-border: 12 15% 88%;
-    --sidebar-ring: 12 85% 55%;
+    --sidebar-accent: 210 100% 45%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 210 100% 30%;
+    --sidebar-ring: 210 100% 50%;
     
     /* Recording states */
     --recording: 0 84% 60%;
@@ -111,5 +111,26 @@
 
   .studio-shadow-lg {
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08), 0 4px 10px rgba(0, 0, 0, 0.06);
+  }
+
+  /* Animation delays для сайдбара */
+  .delay-500 {
+    animation-delay: 500ms;
+  }
+
+  .delay-1000 {
+    animation-delay: 1000ms;
+  }
+
+  /* Animation for dropdown menu */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 }

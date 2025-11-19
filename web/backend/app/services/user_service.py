@@ -13,8 +13,8 @@ class UserService:
         self.db = db
         self.user_repo = UserRepository()
     
-    def get_all_users(self, skip: int = 0, limit: int = 100) -> List[User]:
-        return self.user_repo.get_all(self.db, skip=skip, limit=limit)
+    def get_all_users(self, page_number: int = 1, limit: int = 100) -> tuple[List[User], int]:
+        return self.user_repo.get_all(self.db, page_number=page_number, limit=limit)
     
     def get_user_by_id(self, user_id: int) -> User:
         user = self.user_repo.get_by_id(self.db, user_id)
@@ -34,16 +34,22 @@ class UserService:
                 detail="Username already exists",
             )
         
-        # Создаем нового пользователя
+        # Всегда создаем пользователя как speaker
         new_user = User(
             username=user_data.username,
             hashed_password=get_password_hash(user_data.password),
-            role=user_data.role
+            role=UserRole.SPEAKER
         )
         return self.user_repo.create(self.db, new_user)
     
     def delete_user(self, user_id: int) -> None:
         user = self.get_user_by_id(user_id)
+        # Запрещаем удаление админа
+        if user.role == UserRole.ADMIN:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Cannot delete admin user",
+            )
         self.user_repo.delete(self.db, user)
 
 

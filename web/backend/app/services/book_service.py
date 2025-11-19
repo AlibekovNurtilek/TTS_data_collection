@@ -18,11 +18,25 @@ class BookService:
         self.chunk_repo = ChunkRepository()
         self.category_repo = CategoryRepository()
     
-    def get_all_books(self, skip: int = 0, limit: int = 100) -> List[Book]:
-        return self.book_repo.get_all(self.db, skip=skip, limit=limit)
+    def get_all_books(
+        self,
+        page_number: int = 1,
+        limit: int = 100,
+        category_id: int | None = None,
+        speaker_id: int | None = None,
+        search: str | None = None
+    ) -> tuple[List[Book], int]:
+        return self.book_repo.get_all(
+            self.db,
+            page_number=page_number,
+            limit=limit,
+            category_id=category_id,
+            speaker_id=speaker_id,
+            search=search
+        )
     
-    def get_books_by_category(self, category_id: int, skip: int = 0, limit: int = 100) -> List[Book]:
-        return self.book_repo.get_by_category(self.db, category_id, skip=skip, limit=limit)
+    def get_books_by_category(self, category_id: int, page_number: int = 1, limit: int = 100) -> tuple[List[Book], int]:
+        return self.book_repo.get_by_category(self.db, category_id, page_number=page_number, limit=limit)
     
     def get_book_by_id(self, book_id: int) -> Book:
         book = self.book_repo.get_by_id(self.db, book_id)

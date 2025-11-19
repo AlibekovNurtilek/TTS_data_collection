@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     # JWT - СЕКРЕТНЫЕ ДАННЫЕ (обязательны в .env)
     SECRET_KEY: str = Field(..., description="Секретный ключ для JWT токенов (ОБЯЗАТЕЛЬНО)")
     ALGORITHM: str = Field(default="HS256", description="Алгоритм шифрования JWT")
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=30, description="Время жизни access token в минутах")
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=3000, description="Время жизни access token в минутах")
     
     # CORS
     CORS_ORIGINS: List[str] = Field(
