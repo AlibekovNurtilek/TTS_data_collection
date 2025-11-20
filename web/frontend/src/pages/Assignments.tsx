@@ -190,8 +190,8 @@ export default function Assignments() {
               <UserCheck className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Assignments</h1>
-              <p className="text-gray-500 mt-1">Assign books to speakers</p>
+              <h1 className="text-3xl font-bold text-foreground">Assignments</h1>
+              <p className="text-muted-foreground mt-1">Assign books to speakers</p>
             </div>
           </div>
           <Dialog
@@ -260,25 +260,25 @@ export default function Assignments() {
           </Dialog>
         </div>
 
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
           <Table>
             <TableHeader>
-              <TableRow className="bg-gray-50 hover:bg-gray-50">
-                <TableHead className="font-semibold text-gray-700">Book</TableHead>
-                <TableHead className="font-semibold text-gray-700">Assigned Speakers</TableHead>
+              <TableRow className="bg-muted/50 hover:bg-muted/50">
+                <TableHead className="font-semibold text-foreground">Book</TableHead>
+                <TableHead className="font-semibold text-foreground">Assigned Speakers</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {booksWithSpeakers.map((book) => (
-                <TableRow key={book.id} className="hover:bg-gray-50 transition-colors">
-                  <TableCell className="font-semibold text-gray-900">{book.title}</TableCell>
+                <TableRow key={book.id} className="hover:bg-muted/50 transition-colors">
+                  <TableCell className="font-semibold text-foreground">{book.title}</TableCell>
                   <TableCell>
                     {book.assigned_speakers.length > 0 ? (
                       <div className="flex flex-wrap gap-2">
                         {book.assigned_speakers.map((speaker) => (
                           <div
                             key={speaker.id}
-                            className="inline-flex items-center gap-1.5 bg-blue-50 border border-blue-200 rounded-md px-3 py-1.5 group hover:bg-blue-100 transition-colors"
+                            className="inline-flex items-center gap-1.5 bg-primary/10 dark:bg-primary/20 border border-primary/20 dark:border-primary/30 rounded-md px-3 py-1.5 group hover:bg-primary/20 dark:hover:bg-primary/30 transition-colors"
                           >
                             <div className={cn(
                               "w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-semibold bg-gradient-to-br",
@@ -286,12 +286,12 @@ export default function Assignments() {
                             )}>
                               {speaker.username.charAt(0).toUpperCase()}
                             </div>
-                            <span className="text-sm font-medium text-gray-700">{speaker.username}</span>
+                            <span className="text-sm font-medium text-foreground">{speaker.username}</span>
                             <button
                               onClick={() =>
                                 openDeleteDialog(book.id, book.title, speaker.id, speaker.username)
                               }
-                              className="ml-1 p-0.5 rounded hover:bg-red-100 text-gray-400 hover:text-red-600 transition-colors opacity-0 group-hover:opacity-100"
+                              className="ml-1 p-0.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
                               title="Remove assignment"
                             >
                               <X className="h-3.5 w-3.5" />
@@ -300,7 +300,7 @@ export default function Assignments() {
                         ))}
                       </div>
                     ) : (
-                      <span className="text-gray-400 text-sm italic">No speakers assigned</span>
+                      <span className="text-muted-foreground text-sm italic">No speakers assigned</span>
                     )}
                   </TableCell>
                 </TableRow>
@@ -325,21 +325,21 @@ export default function Assignments() {
         <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle className="text-xl font-bold text-gray-900">
+              <AlertDialogTitle className="text-xl font-bold text-foreground">
                 Remove Assignment
               </AlertDialogTitle>
-              <AlertDialogDescription className="text-gray-600">
-                Are you sure you want to remove <span className="font-semibold text-gray-900">"{assignmentToDelete?.speakerUsername}"</span> from book{" "}
-                <span className="font-semibold text-gray-900">"{assignmentToDelete?.bookTitle}"</span>?
+              <AlertDialogDescription className="text-muted-foreground">
+                Are you sure you want to remove <span className="font-semibold text-foreground">"{assignmentToDelete?.speakerUsername}"</span> from book{" "}
+                <span className="font-semibold text-foreground">"{assignmentToDelete?.bookTitle}"</span>?
                 <br />
-                <span className="text-red-600 font-medium">This action cannot be undone.</span>
+                <span className="text-destructive font-medium">This action cannot be undone.</span>
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel className="border-gray-300">Cancel</AlertDialogCancel>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleUnassign}
-                className="bg-red-600 hover:bg-red-700 text-white"
+                className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
               >
                 Remove Assignment
               </AlertDialogAction>

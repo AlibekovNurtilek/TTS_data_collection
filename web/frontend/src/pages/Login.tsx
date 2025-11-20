@@ -63,7 +63,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0066cc] to-[#004999] p-5">
+    <div className="login-page-light min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0066cc] to-[#004999] p-5">
       <div className="w-full max-w-[1000px] bg-white rounded-[30px] overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.3)] flex flex-col md:flex-row">
         {/* Left Panel - Welcome Section */}
         <div className="hidden md:flex w-full md:w-1/2 bg-gradient-to-br from-[#0066cc] to-[#0052a3] p-10 md:p-20 relative overflow-hidden flex-col justify-center login-welcome-section">
@@ -102,7 +102,7 @@ export default function Login() {
                   onChange={(e) => setUsername(e.target.value)}
                   required
                   disabled={loading}
-                  className="w-full py-3.5 pl-4 pr-4 border border-[#ddd] rounded-lg text-sm focus:outline-none focus:border-[#0066cc] transition-colors"
+                  className="w-full py-3.5 pl-4 pr-4 border border-[#ddd] bg-white text-[#1a1a1a] rounded-lg text-sm focus:outline-none focus:border-[#0066cc]"
                   placeholder="User Name"
                 />
               </div>
@@ -116,7 +116,7 @@ export default function Login() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   disabled={loading}
-                  className="w-full py-3.5 pl-4 pr-16 border border-[#ddd] rounded-lg text-sm focus:outline-none focus:border-[#0066cc] transition-colors"
+                  className="w-full py-3.5 pl-4 pr-16 border border-[#ddd] bg-white text-[#1a1a1a] rounded-lg text-sm focus:outline-none focus:border-[#0066cc]"
                   placeholder="Password"
                 />
                 <button

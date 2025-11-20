@@ -2,7 +2,6 @@ import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { speakersService } from "@/services/speakers";
@@ -10,13 +9,16 @@ import { recordingsService } from "@/services/recordings";
 import { Waveform } from "@/components/Waveform";
 import { RecordingWaveform } from "@/components/RecordingWaveform";
 import {
-  ArrowLeft,
   Mic,
   Square,
   Play,
   Pause,
   Upload,
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  RotateCcw,
+  Save,
 } from "lucide-react";
 import type { SpeakerChunk, Book } from "@/types";
 
@@ -210,30 +212,16 @@ export default function RecordBook() {
     return (
       <Layout>
         <div className="min-h-full bg-gradient-to-b from-background to-muted/20">
-          <div className="px-6 py-8">
-            <Button 
-              variant="ghost" 
-              onClick={() => navigate("/")} 
-              className="mb-6 gap-2 text-muted-foreground hover:text-foreground"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to My Books
-            </Button>
-
-            <Card className="studio-shadow-lg border-2 max-w-2xl mx-auto">
-              <CardContent className="p-16 text-center">
-                <div className="p-4 bg-success/10 rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center">
-                  <CheckCircle2 className="h-10 w-10 text-success" />
-                </div>
-                <h2 className="text-3xl font-bold text-foreground mb-4">All Done! 🎉</h2>
-                <p className="text-muted-foreground text-lg mb-6">
-                  You have successfully recorded all chunks for "{book?.title}".
-                </p>
-                <Button onClick={() => navigate("/")} size="lg">
-                  Back to My Books
-                </Button>
-              </CardContent>
-            </Card>
+          <div className="px-6 py-8 max-w-2xl mx-auto">
+            <div className="p-16 text-center">
+              <div className="p-4 bg-success/10 rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+                <CheckCircle2 className="h-10 w-10 text-success" />
+              </div>
+              <h2 className="text-3xl font-bold text-foreground mb-4">All Done! 🎉</h2>
+              <p className="text-muted-foreground text-lg mb-6">
+                You have successfully recorded all chunks for "{book?.title}".
+              </p>
+            </div>
           </div>
         </div>
       </Layout>
@@ -254,137 +242,126 @@ export default function RecordBook() {
 
   return (
     <Layout>
-      <div className="min-h-full bg-gradient-to-b from-background to-muted/20">
-        <div className="px-6 py-8">
-          {/* Header */}
-          <div className="mb-8">
-            <Button 
-              variant="ghost" 
-              onClick={() => navigate("/")} 
-              className="mb-6 gap-2 text-muted-foreground hover:text-foreground"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to My Books
-            </Button>
-
-            <div className="mb-6">
-              <h1 className="text-4xl font-bold text-foreground mb-3 tracking-tight">{book?.title}</h1>
-              <div className="flex items-center gap-2">
-                <div className="px-4 py-2 bg-primary/10 border border-primary/20 rounded-lg">
-                  <span className="text-sm font-semibold text-primary">
-                    Chunk #{chunk.order_index}
-                  </span>
-                </div>
-              </div>
+      <div className="min-h-full bg-gradient-to-b from-background to-muted/20 pb-32">
+        <div className="px-6 py-8 max-w-8xl mx-auto">
+          {/* Header - компактное название книги */}
+          <div className="mb-16">
+            <div className="inline-block px-6 py-3 bg-muted/60 border border-border/50 rounded-lg mx-auto">
+              <h1 className="text-lg font-medium text-muted-foreground tracking-wide">
+                {book?.title}
+              </h1>
             </div>
           </div>
 
-          {/* Chunk Card */}
-          <Card className="studio-shadow-lg border-2 max-w-4xl mx-auto">
-            <CardContent className="p-8">
-              {/* Text Content */}
-              <div className="bg-gradient-to-br from-muted/50 to-muted/30 p-8 rounded-xl mb-8 border border-border/50">
-                <p className="text-2xl leading-relaxed text-foreground font-normal tracking-wide text-center">
-                  {chunk.text}
-                </p>
-              </div>
+          {/* Text Content */}
+          <div className="dark:bg-gradient-to-br dark:from-muted/50 dark:to-muted/30 p-8 rounded-xl mb-4">
+            <p className="text-2xl leading-relaxed text-foreground font-normal tracking-wide text-center">
+              {chunk.text}
+            </p>
+          </div>
 
-              {/* Waveform Visualization */}
-              <div className="mb-6">
-                {isRecording && stream && (
-                  <RecordingWaveform
-                    stream={stream}
-                    isRecording={isRecording}
-                    duration={recordingDuration}
-                  />
-                )}
-                
-                {audioBlob && !isRecording && audioUrl && (
-                  <div className="space-y-2">
-                    <Waveform
-                      audioUrl={audioUrl}
-                      isPlaying={isPlaying}
-                      onPlayPause={handlePlayPause}
-                      onSeek={handleSeek}
-                      height={120}
-                      waveColor="#3b82f6"
-                      progressColor="#2563eb"
-                      cursorColor="#1e40af"
-                    />
-                  </div>
-                )}
-              </div>
+          {/* Waveform Visualization - всегда показываем */}
+          <div className="mb-8" style={{ minHeight: '180px' }}>
+            {audioBlob && !isRecording && audioUrl ? (
+              <div className="mt-16">  {/* <<< добавил обёртку + margin-top */}
+              <Waveform
+                audioUrl={audioUrl}
+                isPlaying={isPlaying}
+                onPlayPause={handlePlayPause}
+                onSeek={handleSeek}
+                height={96}
+                waveColor="#f97316"
+                progressColor="#ea580c"
+                cursorColor="#c2410c"
+              />
+            </div>
+            ) : (
+              <RecordingWaveform
+                stream={stream}
+                isRecording={isRecording}
+                duration={recordingDuration}
+              />
+            )}
+          </div>
+        </div>
+      </div>
 
-              {/* Recording Controls */}
-              <div className="space-y-6">
-                {/* Main Control Button */}
-                <div className="flex items-center justify-center">
-                  {!isRecording && !audioBlob && (
-                    <Button 
-                      onClick={startRecording} 
-                      size="lg" 
-                      className="gap-3 h-16 px-10 text-lg font-semibold shadow-lg hover:shadow-xl transition-all"
-                    >
-                      <Mic className="h-7 w-7" />
-                      Start Recording
-                    </Button>
-                  )}
-
-                  {isRecording && (
-                    <Button 
-                      onClick={stopRecording} 
-                      size="lg" 
-                      variant="destructive" 
-                      className="gap-3 h-16 px-10 text-lg font-semibold shadow-lg hover:shadow-xl transition-all animate-pulse"
-                    >
-                      <Square className="h-7 w-7" />
-                      Stop Recording
-                    </Button>
-                  )}
-
-                  {audioBlob && !isRecording && (
-                    <div className="flex items-center gap-4">
-                      <Button 
-                        onClick={handlePlayPause} 
-                        size="lg" 
-                        variant="secondary" 
-                        className="gap-3 h-16 px-8 text-lg font-semibold"
-                      >
-                        {isPlaying ? (
-                          <>
-                            <Pause className="h-6 w-6" />
-                            Pause
-                          </>
-                        ) : (
-                          <>
-                            <Play className="h-6 w-6" />
-                            Playback
-                          </>
-                        )}
-                      </Button>
-                      <Button 
-                        onClick={clearRecording} 
-                        size="lg" 
-                        variant="outline"
-                        className="h-16 px-8 text-lg font-semibold border-2"
-                      >
-                        Re-record
-                      </Button>
-                      <Button
-                        onClick={handleUpload}
-                        size="lg"
-                        className="gap-3 h-16 px-10 text-lg font-semibold shadow-lg hover:shadow-xl transition-all"
-                        disabled={uploading}
-                      >
-                        <Upload className="h-6 w-6" />
-                        {uploading ? "Saving..." : "Save & Next"}
-                      </Button>
-                    </div>
-                  )}
+      {/* Fixed Recording Controls - всегда внизу экрана */}
+      <div className="fixed bottom-0 left-72 right-0 h-32 bg-background/95 backdrop-blur-sm z-50">
+        <div className="h-full flex items-center justify-center px-6 max-w-8xl mx-auto">
+          <div className="flex items-center justify-center w-full" style={{ minHeight: '80px' }}>
+            {!isRecording && !audioBlob && (
+              <button
+                onClick={startRecording}
+                className="relative group focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 rounded-full transition-all"
+              >
+                {/* Outer ring */}
+                <div className="w-16 h-16 rounded-full border-4 border-gray-300 dark:border-gray-600 flex items-center justify-center transition-all group-hover:border-gray-400 dark:group-hover:border-gray-500">
+                  {/* Orange circle */}
+                  <div className="w-12 h-12 rounded-full bg-orange-500 transition-all group-hover:scale-110 group-hover:bg-orange-600"></div>
                 </div>
+              </button>
+            )}
+
+            {isRecording && (
+              <button
+                onClick={stopRecording}
+                className="relative group focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 rounded-full transition-all"
+              >
+                {/* Outer ring */}
+                <div className="w-16 h-16 rounded-full border-4 border-gray-300 dark:border-gray-600 flex items-center justify-center transition-all group-hover:border-gray-400 dark:group-hover:border-gray-500 animate-pulse">
+                  {/* Orange rounded square */}
+                  <div className="w-8 h-8 rounded-lg bg-orange-500 transition-all group-hover:bg-orange-600"></div>
+                </div>
+              </button>
+            )}
+
+            {audioBlob && !isRecording && (
+              <div className="flex items-center gap-3 flex-wrap justify-center">
+                
+                <Button 
+                  onClick={clearRecording} 
+                  size="lg" 
+                  variant="secondary"
+                  className="gap-2 h-12 px-6 min-w-[180px] border-2 border-orange-500/50 dark:border-orange-500/30 rounded-full bg-transparent hover:bg-orange-50 dark:bg-[#1A1A1A] dark:hover:bg-[#2A2A2A] text-orange-600 dark:text-orange-400"
+                >
+                  <RotateCcw className="h-5 w-5" />
+                  Кайра жаз
+                </Button>
+
+                <Button 
+                  onClick={handlePlayPause} 
+                  size="lg" 
+                  variant="secondary" 
+                  className="gap-2 h-12 px-10 border-2 border-blue-500/50 dark:border-blue-500/30 rounded-full bg-transparent hover:bg-blue-50 dark:bg-[#1A1A1A] dark:hover:bg-[#2A2A2A] text-blue-600 dark:text-blue-400"
+                >
+                  {isPlaying ? (
+                    <>
+                      <Pause className="h-5 w-5" />
+                      
+                    </>
+                  ) : (
+                    <>
+                      <Play className="h-5 w-5" />
+                      
+                    </>
+                  )}
+                </Button>
+
+
+                <Button
+                  onClick={handleUpload}
+                  size="lg"
+                  variant="secondary"
+                  className="gap-2 h-12 px-6 min-w-[180px] border-2 border-green-500/50 dark:border-green-500/30 rounded-full bg-transparent hover:bg-green-50 dark:bg-[#1A1A1A] dark:hover:bg-[#2A2A2A] text-green-600 dark:text-green-400"
+                  disabled={uploading}
+                >
+                  <Save className="h-5 w-5" />
+                  {uploading ? "Сакталууда..." : "Сактап, кийинкиге"}
+                </Button>
               </div>
-            </CardContent>
-          </Card>
+            )}
+          </div>
         </div>
       </div>
     </Layout>

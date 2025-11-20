@@ -150,8 +150,8 @@ export default function Users() {
               <UsersIcon className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Users Management</h1>
-              <p className="text-gray-500 mt-1">Manage system users and permissions</p>
+              <h1 className="text-3xl font-bold text-foreground">Users Management</h1>
+              <p className="text-muted-foreground mt-1">Manage system users and permissions</p>
             </div>
           </div>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -164,7 +164,7 @@ export default function Users() {
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
                 <DialogTitle className="text-2xl font-bold">Create New User</DialogTitle>
-                <p className="text-sm text-gray-500 mt-1">New users will be created as speakers</p>
+                <p className="text-sm text-muted-foreground mt-1">New users will be created as speakers</p>
               </DialogHeader>
               <form onSubmit={handleCreate} className="space-y-4 mt-4">
                 <div className="space-y-2">
@@ -202,35 +202,35 @@ export default function Users() {
         </div>
 
         {/* Users Table */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
           <Table>
             <TableHeader>
-              <TableRow className="bg-gray-50 hover:bg-gray-50">
-                <TableHead className="font-semibold text-gray-700">ID</TableHead>
-                <TableHead className="font-semibold text-gray-700">Username</TableHead>
-                <TableHead className="font-semibold text-gray-700">Role</TableHead>
-                <TableHead className="text-right font-semibold text-gray-700">Actions</TableHead>
+              <TableRow className="bg-muted/50 hover:bg-muted/50">
+                <TableHead className="font-semibold text-foreground">ID</TableHead>
+                <TableHead className="font-semibold text-foreground">Username</TableHead>
+                <TableHead className="font-semibold text-foreground">Role</TableHead>
+                <TableHead className="text-right font-semibold text-foreground">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {users.map((user) => (
-                <TableRow key={user.id} className="hover:bg-gray-50 transition-colors">
-                  <TableCell className="font-medium text-gray-600">{user.id}</TableCell>
+                <TableRow key={user.id} className="hover:bg-muted/50 transition-colors">
+                  <TableCell className="font-medium text-muted-foreground">{user.id}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-gray-900">{user.username}</span>
+                      <span className="font-medium text-foreground">{user.username}</span>
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       {user.role === "admin" ? (
                         <>
-                          <span className="capitalize font-medium text-[#0066cc] bg-blue-50 px-2 py-1 rounded-md text-xs">
+                          <span className="capitalize font-medium text-primary bg-primary/10 dark:bg-primary/20 px-2 py-1 rounded-md text-xs">
                             {user.role}
                           </span>
                         </>
                       ) : (
-                        <span className="capitalize font-medium text-gray-600 bg-gray-100 px-2 py-1 rounded-md text-xs">
+                        <span className="capitalize font-medium text-muted-foreground bg-muted px-2 py-1 rounded-md text-xs">
                           {user.role}
                         </span>
                       )}
@@ -241,7 +241,7 @@ export default function Users() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50 transition-all"
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10 transition-all"
                         onClick={() => {
                           setUserToDelete(user);
                           setDeleteDialogOpen(true);
@@ -252,7 +252,7 @@ export default function Users() {
                       </Button>
                     )}
                     {user.role === "admin" && (
-                      <span className="text-xs text-gray-400 italic">Protected</span>
+                      <span className="text-xs text-muted-foreground italic">Protected</span>
                     )}
                   </TableCell>
                 </TableRow>
@@ -276,18 +276,18 @@ export default function Users() {
         <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle className="text-xl font-bold text-gray-900">Delete User</AlertDialogTitle>
-              <AlertDialogDescription className="text-gray-600">
-                Are you sure you want to delete user <span className="font-semibold text-gray-900">"{userToDelete?.username}"</span>? 
+              <AlertDialogTitle className="text-xl font-bold text-foreground">Delete User</AlertDialogTitle>
+              <AlertDialogDescription className="text-muted-foreground">
+                Are you sure you want to delete user <span className="font-semibold text-foreground">"{userToDelete?.username}"</span>? 
                 <br />
-                <span className="text-red-600 font-medium">This action cannot be undone.</span>
+                <span className="text-destructive font-medium">This action cannot be undone.</span>
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel className="border-gray-300">Cancel</AlertDialogCancel>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction 
                 onClick={handleDelete}
-                className="bg-red-600 hover:bg-red-700 text-white"
+                className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
               >
                 Delete User
               </AlertDialogAction>

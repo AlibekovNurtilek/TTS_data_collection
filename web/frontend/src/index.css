@@ -78,6 +78,66 @@ wave:hover {
     --recording: 0 84% 60%;
     --recorded: 142 71% 45%;
   }
+
+  .dark {
+    /* Dark background - черный фон */
+    --background: 0 0% 0%;
+    --foreground: 0 0% 98%;
+
+    /* Cards - почти черные карточки (чтобы не было заметной разницы) */
+    --card: 0 0% 3%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 0 0% 3%;
+    --popover-foreground: 0 0% 98%;
+
+    /* Primary - яркий фиолетовый для темной темы (гармонирует с фиолетовыми тенями) */
+    --primary: 270 100% 65%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary - почти черный */
+    --secondary: 0 0% 5%;
+    --secondary-foreground: 0 0% 98%;
+
+    /* Muted - черный (чтобы градиент был незаметен) */
+    --muted: 0 0% 0%;
+    --muted-foreground: 0 0% 65%;
+
+    /* Accent - яркий фиолетовый */
+    --accent: 270 100% 65%;
+    --accent-foreground: 0 0% 100%;
+
+    /* Destructive - красный */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Success - зеленый */
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+
+    /* Warning - оранжевый */
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    /* Borders - темные серые */
+    --border: 0 0% 15%;
+    --input: 0 0% 15%;
+    --ring: 270 100% 65%;
+
+    /* Sidebar - темный градиент для темной темы */
+    --sidebar-background: 0 0% 5%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 270 100% 70%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 8%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 0 0% 10%;
+    --sidebar-ring: 270 100% 65%;
+    
+    /* Recording states */
+    --recording: 0 84% 60%;
+    --recorded: 142 71% 45%;
+  }
 }
 
 @layer base {
@@ -88,6 +148,29 @@ wave:hover {
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Убираем переходы для цветов при смене темы - мгновенная смена */
+  /* Но оставляем переходы для hover/focus эффектов */
+  *,
+  *::before,
+  *::after {
+    transition-property: opacity, box-shadow, transform;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 0.2s;
+  }
+
+  /* Для hover и focus оставляем плавные переходы */
+  *:hover,
+  *:focus,
+  *:active,
+  button,
+  a,
+  input,
+  textarea,
+  select,
+  [role="button"] {
+    transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
   }
 
   /* Улучшенная типографика */
@@ -114,12 +197,26 @@ wave:hover {
     @apply bg-white/80 backdrop-blur-sm border border-white/20;
   }
 
+  .dark .glass-effect {
+    @apply bg-black/40 backdrop-blur-sm border border-white/10;
+  }
+
   .studio-shadow {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.06);
   }
 
+  .dark .studio-shadow {
+    /* Неоновый фиолетовый оттенок для теней в темной теме */
+    box-shadow: 0 2px 8px rgba(168, 85, 247, 0.2), 0 1px 3px rgba(168, 85, 247, 0.25);
+  }
+
   .studio-shadow-lg {
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08), 0 4px 10px rgba(0, 0, 0, 0.06);
+  }
+
+  .dark .studio-shadow-lg {
+    /* Неоновый фиолетовый оттенок для больших теней в темной теме */
+    box-shadow: 0 10px 25px rgba(168, 85, 247, 0.25), 0 4px 10px rgba(168, 85, 247, 0.3);
   }
 
   /* Animation delays для сайдбара */
@@ -141,5 +238,55 @@ wave:hover {
       opacity: 1;
       transform: translateY(0);
     }
+  }
+
+  /* Принудительно светлая тема для страницы логина */
+  /* Переопределяем темную тему для страницы логина */
+  .login-page-light,
+  .login-page-light.dark,
+  .dark .login-page-light {
+    color-scheme: light !important;
+    /* Принудительно устанавливаем светлые цвета */
+    --background: 0 0% 98% !important;
+    --foreground: 0 0% 15% !important;
+    --card: 0 0% 100% !important;
+    --card-foreground: 0 0% 15% !important;
+    --popover: 0 0% 100% !important;
+    --popover-foreground: 0 0% 15% !important;
+    --muted: 0 0% 95% !important;
+    --muted-foreground: 0 0% 45% !important;
+    --border: 0 0% 88% !important;
+    --input: 0 0% 88% !important;
+  }
+
+  /* В темной теме убираем градиент, делаем фон единообразным черным */
+  .dark [class*="bg-gradient-to-b"][class*="from-background"][class*="to-muted"] {
+    background: hsl(var(--background)) !important;
+    background-image: none !important;
+  }
+
+  /* Неоновые фиолетовые тени для стандартных Tailwind классов в темной теме */
+  .dark .shadow-sm {
+    box-shadow: 0 1px 2px 0 rgba(168, 85, 247, 0.15), 0 1px 3px 0 rgba(168, 85, 247, 0.15) !important;
+  }
+
+  .dark .shadow {
+    box-shadow: 0 1px 3px 0 rgba(168, 85, 247, 0.18), 0 1px 2px 0 rgba(168, 85, 247, 0.18) !important;
+  }
+
+  .dark .shadow-md {
+    box-shadow: 0 4px 6px -1px rgba(168, 85, 247, 0.2), 0 2px 4px -1px rgba(168, 85, 247, 0.2) !important;
+  }
+
+  .dark .shadow-lg {
+    box-shadow: 0 10px 15px -3px rgba(168, 85, 247, 0.25), 0 4px 6px -2px rgba(168, 85, 247, 0.25) !important;
+  }
+
+  .dark .shadow-xl {
+    box-shadow: 0 20px 25px -5px rgba(168, 85, 247, 0.3), 0 10px 10px -5px rgba(168, 85, 247, 0.3) !important;
+  }
+
+  .dark .shadow-2xl {
+    box-shadow: 0 25px 50px -12px rgba(168, 85, 247, 0.35) !important;
   }
 }

@@ -18,9 +18,9 @@ export function Waveform({
   onPlayPause,
   onSeek,
   height = 100,
-  waveColor = "#3b82f6",
-  progressColor = "#2563eb",
-  cursorColor = "#1e40af",
+  waveColor = "#f97316",
+  progressColor = "#ea580c",
+  cursorColor = "#c2410c",
 }: WaveformProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const wavesurferRef = useRef<WaveSurfer | null>(null);

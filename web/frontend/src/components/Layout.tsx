@@ -2,6 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { 
   Users, 
   FolderOpen, 
@@ -45,9 +46,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-background dark:bg-background">
       {/* Professional Dark Blue Sidebar */}
-      <aside className="w-72 bg-gradient-to-b from-[#0066cc] via-[#0052a3] to-[#004999] flex flex-col relative overflow-hidden shadow-2xl">
+      <aside className="w-72 bg-gradient-to-b from-[#0066cc] via-[#0052a3] to-[#004999] dark:from-[#0a1628] dark:via-[#0d1b2e] dark:to-[#0f1f35] flex flex-col relative overflow-hidden shadow-2xl border-r border-white/20 dark:border-white/10">
         {/* Decorative background elements */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-0 -right-20 w-64 h-64 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
@@ -61,15 +62,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* Header */}
-        <div className="relative z-10 p-6 border-b border-white/20">
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <div className="absolute inset-0 bg-white/20 rounded-2xl blur-lg animate-pulse"></div>
-              <div className="relative p-3 bg-white/20 backdrop-blur-sm rounded-2xl border border-white/30">
-                <Mic className="h-5 w-5 text-white" />
+        <div className="relative z-10 p-6 border-b border-white/20 dark:border-white/10">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <div className="absolute inset-0 bg-white/20 dark:bg-white/10 rounded-2xl blur-lg animate-pulse"></div>
+                <div className="relative p-3 bg-white/20 dark:bg-white/10 backdrop-blur-sm rounded-2xl border border-white/30 dark:border-white/20">
+                  <Mic className="h-4 w-4 text-white" />
+                </div>
               </div>
+              <h1 className="text-xl font-bold text-white tracking-tight">Voice Studio</h1>
             </div>
-            <h1 className="text-xl font-bold text-white tracking-tight">Voice Studio</h1>
+            <ThemeToggle />
           </div>
         </div>
 
@@ -85,13 +89,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 className={cn(
                   "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group relative overflow-hidden",
                   active
-                    ? "bg-white text-[#0066cc] shadow-lg shadow-black/20 transform scale-[1.02]"
+                    ? "bg-white text-[#0066cc] dark:bg-[#a855f7] dark:text-white shadow-lg shadow-black/20 dark:shadow-[#a855f7]/30 transform scale-[1.02]"
                     : "text-white/90 hover:bg-white/10 hover:text-white hover:shadow-md"
                 )}
               >
                 {/* Active indicator */}
                 {active && (
-                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-white rounded-r-full"></div>
+                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-white dark:bg-[#a855f7] rounded-r-full"></div>
                 )}
                 
                 {/* Hover effect */}
@@ -101,11 +105,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 
                 <Icon className={cn(
                   "h-5 w-5 transition-all duration-300 relative z-10",
-                  active ? "text-[#0066cc]" : "group-hover:scale-110 group-hover:rotate-3"
+                  active ? "text-[#0066cc] dark:text-white" : "group-hover:scale-110 group-hover:rotate-3"
                 )} />
                 <span className={cn(
                   "font-semibold text-sm relative z-10",
-                  active ? "text-[#0066cc]" : ""
+                  active ? "text-[#0066cc] dark:text-white" : ""
                 )}>{link.label}</span>
                 
                 {/* Sparkle effect on hover */}
@@ -119,7 +123,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
         {/* Footer */}
         <div 
-          className="relative z-10 p-4 border-t border-white/20"
+          className="relative z-10 p-4 "
           onMouseEnter={() => setIsMenuOpen(true)}
           onMouseLeave={() => setIsMenuOpen(false)}
         >
@@ -140,30 +144,30 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
           {/* Dropdown menu on hover */}
           {isMenuOpen && (
-            <div className="absolute bottom-full left-4 right-4 mb-0 bg-white border border-gray-200 shadow-xl rounded-lg p-1 opacity-0 animate-[fadeIn_0.2s_ease-out_forwards]">
+            <div className="absolute bottom-full left-4 right-4 mb-0 bg-white dark:bg-[#1a2332] border border-gray-200 dark:border-gray-700 shadow-xl rounded-lg p-1 opacity-0 animate-[fadeIn_0.2s_ease-out_forwards] z-50">
               <button
-                className="w-full flex items-center gap-2 px-3 py-2 rounded-md hover:bg-gray-100 transition-colors text-left"
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-left"
                 onClick={(e) => {
                   e.preventDefault();
                   // TODO: Navigate to profile
                 }}
               >
-                <User className="h-4 w-4 text-gray-600" />
-                <span className="text-sm font-medium text-gray-700">Profile</span>
+                <User className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Profile</span>
               </button>
               <button
-                className="w-full flex items-center gap-2 px-3 py-2 rounded-md hover:bg-gray-100 transition-colors text-left"
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-left"
                 onClick={(e) => {
                   e.preventDefault();
                   // TODO: Navigate to settings
                 }}
               >
-                <Settings className="h-4 w-4 text-gray-600" />
-                <span className="text-sm font-medium text-gray-700">Settings</span>
+                <Settings className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Settings</span>
               </button>
-              <div className="h-px bg-gray-200 my-1"></div>
+              <div className="h-px bg-gray-200 dark:bg-gray-700 my-1"></div>
               <button
-                className="w-full flex items-center gap-2 px-3 py-2 rounded-md hover:bg-red-50 text-red-600 transition-colors text-left"
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 transition-colors text-left"
                 onClick={() => logout()}
               >
                 <LogOut className="h-4 w-4" />
@@ -175,7 +179,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 overflow-auto bg-gray-50">
+      <main className="flex-1 overflow-auto bg-background dark:bg-background border-l border-transparent dark:border-white/5">
         <div className="min-h-full max-w-7xl mx-auto w-full">
           {children}
         </div>

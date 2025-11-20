@@ -78,9 +78,13 @@ export function RecordingWaveform({
     // Очищаем canvas
     ctx.clearRect(0, 0, canvasWidth, WAVEFORM_HEIGHT);
     
-    if (waveformSamples.length === 0) return;
-
     const centerY = Math.round(WAVEFORM_HEIGHT / 2);
+    
+    // Если нет данных, просто выходим (горизонтальная линия рисуется отдельно)
+    if (waveformSamples.length === 0) {
+      return;
+    }
+
     const maxAmplitude = WAVEFORM_HEIGHT / 2 - 10; // Оставляем отступы сверху и снизу
 
     // Собираем все точки вейвформы в один массив
@@ -117,7 +121,10 @@ export function RecordingWaveform({
       currentX += sampleWidth;
     }
     
-    if (topPoints.length === 0) return;
+    // Если нет точек, просто выходим (горизонтальная линия рисуется отдельно)
+    if (topPoints.length === 0) {
+      return;
+    }
 
     // Рисуем заполненную вейвформу
     ctx.beginPath();
@@ -159,13 +166,7 @@ export function RecordingWaveform({
     }
     ctx.stroke();
     
-    // Рисуем горизонтальную линию по центру вейвформы (влево и вправо через весь canvas)
-    ctx.strokeStyle = "rgba(255, 107, 53, 0.4)"; // Оранжевая с прозрачностью
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(0, centerY);
-    ctx.lineTo(canvasWidth, centerY);
-    ctx.stroke();
+    // Горизонтальная линия рисуется отдельно как фиксированный элемент
   }, [waveformSamples, containerWidth]);
 
   // Redraw waveform when data or container width changes
@@ -250,10 +251,6 @@ export function RecordingWaveform({
     };
   }, [stream, isRecording, collectData]);
 
-  if (!isRecording || !stream) {
-    return null;
-  }
-
   // Центр экрана
   const centerX = containerWidth / 2;
   
@@ -264,8 +261,9 @@ export function RecordingWaveform({
   const totalSamples = waveformSamples.length;
   
   // Позиция последнего сэмпла (правый конец) должна быть в центре
+  // Если нет записи, показываем пустую вейвформу (translateX = centerX)
   const lastSamplePosition = totalSamples * (pixelsPerSecond / SAMPLES_PER_SECOND);
-  const translateX = centerX - lastSamplePosition;
+  const translateX = isRecording && totalSamples > 0 ? centerX - lastSamplePosition : centerX;
 
   // Генерируем временные метки: от -5 до +5 секунд относительно центра
   const timeMarkers = [];
@@ -306,9 +304,21 @@ export function RecordingWaveform({
   return (
     <div className="w-full" ref={containerRef}>
       {/* Timeline Container */}
-      <div className="relative w-full h-64 flex items-center justify-center overflow-hidden">
+      <div className="relative w-full h-48 flex items-center justify-center overflow-hidden">
+        {/* Fixed Horizontal Line - всегда в центре, видна в обе стороны */}
+        <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-[1px] z-10 pointer-events-none" style={{ backgroundColor: 'rgba(255, 107, 53, 0.4)' }}></div>
+        
         {/* Fixed Playhead (The "Cursor") - всегда в центре */}
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-32 w-[2px] z-30 pointer-events-none" style={{ backgroundColor: 'hsl(210, 100%, 35%)' }}></div>
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-24 z-30 pointer-events-none">
+          {/* Line with gradient fade effect */}
+          <div 
+            className="absolute left-1/2 top-0 -translate-x-1/2 w-[2px] h-full bg-orange-500"
+            style={{
+              maskImage: 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,1) 15%, rgba(0,0,0,1) 85%, transparent 100%)',
+              WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,1) 15%, rgba(0,0,0,1) 85%, transparent 100%)'
+            }}
+          ></div>
+        </div>
 
         {/* Moving Track (Ruler + Waveform) */}
         <div
@@ -349,12 +359,14 @@ export function RecordingWaveform({
         <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-background to-transparent z-20 pointer-events-none"></div>
       </div>
 
-      {/* Timer Display */}
-      <div className="mt-4 text-center">
-        <span className="text-5xl font-normal tracking-wider text-foreground font-mono tabular-nums">
-          {formatTime(duration)}
-        </span>
-      </div>
+      {/* Timer Display - показываем только во время записи */}
+      {isRecording && (
+        <div className="mt-4 text-center">
+          <span className="text-5xl font-normal tracking-wider text-foreground font-mono tabular-nums">
+            {formatTime(duration)}
+          </span>
+        </div>
+      )}
     </div>
   );
 }
