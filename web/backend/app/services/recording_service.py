@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status, UploadFile
 from typing import Optional
+from pathlib import Path
 
 from app.models.recording import Recording
 from app.models.chunk import Chunk
@@ -11,6 +12,7 @@ from app.repositories.chunk_repository import ChunkRepository
 from app.repositories.user_repository import UserRepository
 from app.repositories.book_repository import BookRepository
 from app.core.audio_processor import convert_to_wav_16bit_mono, save_audio_file
+from app.config import settings
 
 
 class RecordingService:
@@ -133,4 +135,59 @@ class RecordingService:
     def get_recordings_by_speaker(self, speaker_id: int, page_number: int = 1, limit: int = 100) -> tuple[list[Recording], int]:
         """Получить записи спикера с пагинацией"""
         return self.recording_repo.get_by_speaker(self.db, speaker_id, page_number=page_number, limit=limit)
+    
+    def get_audio_file_path(self, recording_id: int, current_user: User) -> Path:
+        """
+        Получить абсолютный путь к аудио файлу с проверкой прав доступа.
+        
+        Args:
+            recording_id: ID записи
+            current_user: Текущий пользователь
+        
+        Returns:
+            Path: Абсолютный путь к аудио файлу
+        
+        Raises:
+            HTTPException: Если запись не найдена или нет доступа
+        """
+        # Получаем запись
+        recording = self.get_recording_by_id(recording_id)
+        
+        # Проверяем права доступа
+        # Админы имеют доступ ко всем записям
+        if current_user.role == UserRole.ADMIN:
+            pass  # Доступ разрешен
+        # Спикеры имеют доступ только к своим записям
+        elif current_user.role == UserRole.SPEAKER:
+            if recording.speaker_id != current_user.id:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="You don't have access to this recording"
+                )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied"
+            )
+        
+        # Получаем абсолютный путь к файлу
+        # audio_file_path хранится как относительный путь от корня проекта
+        # Например: wavs/speaker_name/book_name_chunk_id.wav
+        backend_dir = Path(__file__).parent.parent.parent  # Переходим из app/services/ в backend/
+        
+        # Если путь абсолютный, используем его как есть
+        if Path(recording.audio_file_path).is_absolute():
+            file_path = Path(recording.audio_file_path)
+        else:
+            # Иначе разрешаем относительно backend/
+            file_path = backend_dir / recording.audio_file_path
+        
+        # Проверяем существование файла
+        if not file_path.exists():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Audio file not found"
+            )
+        
+        return file_path
 

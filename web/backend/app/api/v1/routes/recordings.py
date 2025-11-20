@@ -1,5 +1,7 @@
 from fastapi import APIRouter, Depends, status, UploadFile, File, Form, Query, HTTPException
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
+import os
 
 from app.database import get_db
 from app.dependencies import get_current_user
@@ -67,6 +69,47 @@ async def get_chunk_recordings(
         total=total,
         pageNumber=pageNumber,
         limit=limit
+    )
+
+
+@router.get(
+    "/{recording_id}/audio"
+)
+async def get_recording_audio(
+    recording_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Получить аудио файл записи.
+    
+    - **recording_id**: ID записи
+    
+    Доступно только для авторизованных пользователей:
+    - Админы могут получить любую запись
+    - Спикеры могут получить только свои записи
+    
+    Возвращает WAV файл для воспроизведения в браузере.
+    Можно использовать напрямую в теге <audio src="..."> или открыть в браузере.
+    """
+    recording_service = RecordingService(db)
+    file_path = recording_service.get_audio_file_path(recording_id, current_user)
+    
+    # Функция для стриминга файла по частям (эффективно для больших файлов)
+    def iterfile():
+        with open(file_path, mode="rb") as f:
+            yield from f
+    
+    # Возвращаем StreamingResponse с правильными заголовками для inline воспроизведения
+    # StreamingResponse эффективнее для больших файлов и поддерживает range requests
+    return StreamingResponse(
+        iterfile(),
+        media_type="audio/wav",
+        headers={
+            "Content-Disposition": "inline",
+            "Accept-Ranges": "bytes",
+            "Content-Length": str(os.path.getsize(file_path))
+        }
     )
 
 
