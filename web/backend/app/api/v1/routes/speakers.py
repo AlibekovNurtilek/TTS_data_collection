@@ -6,17 +6,18 @@ from app.database import get_db
 from app.dependencies import get_current_user, verify_book_access
 from app.models.user import User, UserRole
 from app.schemas.chunk import SpeakerChunkResponse, SpeakerChunksPaginatedResponse
-from app.schemas.book import BookResponse
+from app.schemas.book import BookResponse, BookWithStatisticsResponse
 from app.services.chunk_service import ChunkService
 from app.services.book_service import BookService
 from app.repositories.recording_repository import RecordingRepository
+from app.repositories.chunk_repository import ChunkRepository
 
 router = APIRouter()
 
 
 @router.get(
     "/me/books/{book_id}",
-    response_model=BookResponse,
+    response_model=BookWithStatisticsResponse,
     status_code=status.HTTP_200_OK
 )
 async def get_my_book(
@@ -25,10 +26,16 @@ async def get_my_book(
     current_user: User = Depends(get_current_user)
 ):
     """
-    Получить информацию о книге для текущего спикера.
+    Получить информацию о книге для текущего спикера со статистикой.
     Доступно только для спикеров, которым назначена книга.
     
     - **book_id**: ID книги
+    
+    Возвращает расширенную информацию о книге, включая:
+    - Общее количество чанков
+    - Количество записанных чанков
+    - Количество не записанных чанков
+    - Процент прогресса
     """
     # Проверяем, что пользователь является спикером
     if current_user.role != UserRole.SPEAKER:
@@ -43,7 +50,40 @@ async def get_my_book(
     book_service = BookService(db)
     book = book_service.get_book_by_id(book_id)
     
-    return BookResponse.model_validate(book)
+    # Получаем статистику по чанкам
+    chunk_repo = ChunkRepository()
+    recording_repo = RecordingRepository()
+    
+    # Общее количество чанков
+    total_chunks = chunk_repo.count_by_book(db, book_id)
+    
+    # Получаем все чанки книги
+    from app.models.chunk import Chunk
+    all_chunks = db.query(Chunk).filter(Chunk.book_id == book_id).all()
+    
+    # Подсчитываем записанные чанки
+    recorded_count = 0
+    for chunk in all_chunks:
+        recording = recording_repo.get_by_chunk_and_speaker(
+            db,
+            chunk.id,
+            current_user.id
+        )
+        if recording:
+            recorded_count += 1
+    
+    unrecorded_count = total_chunks - recorded_count
+    progress_percentage = (recorded_count / total_chunks * 100) if total_chunks > 0 else 0.0
+    
+    # Формируем ответ
+    book_response = BookResponse.model_validate(book)
+    return BookWithStatisticsResponse(
+        **book_response.model_dump(),
+        total_chunks=total_chunks,
+        recorded_chunks=recorded_count,
+        unrecorded_chunks=unrecorded_count,
+        progress_percentage=round(progress_percentage, 2)
+    )
 
 
 @router.get(

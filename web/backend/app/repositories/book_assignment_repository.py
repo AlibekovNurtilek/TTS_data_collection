@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, select, insert, delete
-from typing import List
+from sqlalchemy import and_, select, insert, delete, or_
+from typing import List, Optional
 from app.models.book_speaker_assignment import book_speaker_assignment
 from app.models.book import Book
 from app.models.user import User
@@ -51,12 +51,36 @@ class BookAssignmentRepository:
         return book.assigned_speakers
     
     @staticmethod
-    def get_assignments_by_speaker(db: Session, speaker_id: int) -> List[Book]:
-        """Получить все книги, назначенные спикеру"""
-        speaker = db.query(User).filter(User.id == speaker_id).first()
-        if not speaker:
-            return []
-        return speaker.assigned_books
+    def get_assignments_by_speaker(
+        db: Session,
+        speaker_id: int,
+        category_id: Optional[int] = None,
+        search: Optional[str] = None
+    ) -> List[Book]:
+        """Получить все книги, назначенные спикеру с фильтрацией"""
+        # Используем join для фильтрации
+        query = db.query(Book).join(
+            book_speaker_assignment,
+            Book.id == book_speaker_assignment.c.book_id
+        ).filter(
+            book_speaker_assignment.c.speaker_id == speaker_id
+        )
+        
+        # Фильтр по категории
+        if category_id:
+            query = query.filter(Book.category_id == category_id)
+        
+        # Поиск по названию книги
+        if search:
+            search_pattern = f"%{search}%"
+            query = query.filter(
+                or_(
+                    Book.title.ilike(search_pattern),
+                    Book.original_filename.ilike(search_pattern)
+                )
+            )
+        
+        return query.all()
     
     @staticmethod
     def is_assigned(db: Session, book_id: int, speaker_id: int) -> bool:

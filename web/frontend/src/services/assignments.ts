@@ -22,7 +22,15 @@ export const assignmentsService = {
     return api.get<UsersPaginatedResponse>(`/admin/assignments/speakers?pageNumber=${pageNumber}&limit=${limit}`);
   },
 
-  async getMyBooks(): Promise<SpeakerWithBooks> {
-    return api.get<SpeakerWithBooks>("/assignments/my-books");
+  async getMyBooks(categoryId?: number, search?: string): Promise<SpeakerWithBooks> {
+    const params = new URLSearchParams();
+    if (categoryId) {
+      params.append("category_id", categoryId.toString());
+    }
+    if (search) {
+      params.append("search", search);
+    }
+    const queryString = params.toString();
+    return api.get<SpeakerWithBooks>(`/assignments/my-books${queryString ? `?${queryString}` : ""}`);
   },
 };

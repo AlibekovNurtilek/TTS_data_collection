@@ -35,6 +35,13 @@ export interface Book {
   updated_at: string | null;
 }
 
+export interface BookWithStatistics extends Book {
+  total_chunks: number;
+  recorded_chunks: number;
+  unrecorded_chunks: number;
+  progress_percentage: number;
+}
+
 export interface Chunk {
   id: number;
   book_id: number;

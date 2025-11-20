@@ -15,4 +15,9 @@ export const recordingsService = {
   async getRecording(recordingId: number): Promise<Recording> {
     return api.get<Recording>(`/recordings/${recordingId}`);
   },
+
+  async getRecordingAudio(recordingId: number): Promise<string> {
+    const blob = await api.getAudioBlob(`/recordings/${recordingId}/audio`);
+    return URL.createObjectURL(blob);
+  },
 };

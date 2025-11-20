@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.routes import (
-    health, auth, users, categories, books, book_assignments, chunks, recordings, speakers, assignments_common
+    health, auth, users, categories, categories_common, books, book_assignments, chunks, recordings, speakers, assignments_common
 )
 from app.config import settings
 from app.core.init_db import init_default_admin
@@ -45,4 +45,6 @@ app.include_router(recordings.router, prefix="/api/v1/recordings", tags=["record
 # Common routes (accessible by both admin and speakers)
 # Get my assigned books - доступно для всех авторизованных
 app.include_router(assignments_common.router, prefix="/api/v1/assignments", tags=["assignments"])
+# Get categories - доступно для всех авторизованных
+app.include_router(categories_common.router, prefix="/api/v1/categories", tags=["categories"])
 

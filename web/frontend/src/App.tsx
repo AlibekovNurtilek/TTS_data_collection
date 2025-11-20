@@ -15,6 +15,7 @@ import Books from "./pages/Books";
 import BookChunks from "./pages/BookChunks";
 import Assignments from "./pages/Assignments";
 import SpeakerBooks from "./pages/SpeakerBooks";
+import SpeakerBookChunks from "./pages/SpeakerBookChunks";
 import RecordBook from "./pages/RecordBook";
 import NotFound from "./pages/NotFound";
 
@@ -94,6 +95,14 @@ function AppRoutes() {
       />
 
       {/* Speaker Routes */}
+      <Route
+        path="/speaker/books/:bookId/chunks"
+        element={
+          <ProtectedRoute allowedRoles={["speaker"]}>
+            <SpeakerBookChunks />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/record/:bookId"
         element={

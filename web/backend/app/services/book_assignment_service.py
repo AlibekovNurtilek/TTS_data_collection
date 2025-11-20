@@ -124,7 +124,12 @@ class BookAssignmentService:
         
         return speaker_data
     
-    def get_user_with_books(self, user_id: int) -> SpeakerWithBooksResponse:
+    def get_user_with_books(
+        self,
+        user_id: int,
+        category_id: int | None = None,
+        search: str | None = None
+    ) -> SpeakerWithBooksResponse:
         """Получить пользователя со списком назначенных книг (без проверки роли)"""
         user = self.user_repo.get_by_id(self.db, user_id)
         if not user:
@@ -133,7 +138,12 @@ class BookAssignmentService:
                 detail="User not found"
             )
         
-        books = self.assignment_repo.get_assignments_by_speaker(self.db, user_id)
+        books = self.assignment_repo.get_assignments_by_speaker(
+            self.db,
+            user_id,
+            category_id=category_id,
+            search=search
+        )
         
         user_data = SpeakerWithBooksResponse.model_validate(user)
         user_data.assigned_books = [

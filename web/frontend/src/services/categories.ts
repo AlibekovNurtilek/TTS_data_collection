@@ -2,8 +2,11 @@ import { api } from "@/lib/api";
 import type { Category, CategoryCreate, CategoriesPaginatedResponse } from "@/types";
 
 export const categoriesService = {
-  async getCategories(pageNumber = 1, limit = 100): Promise<CategoriesPaginatedResponse> {
-    return api.get<CategoriesPaginatedResponse>(`/admin/categories?pageNumber=${pageNumber}&limit=${limit}`);
+  async getCategories(pageNumber = 1, limit = 100, usePublicEndpoint = false): Promise<CategoriesPaginatedResponse> {
+    // Если usePublicEndpoint = true, используем публичный эндпоинт (для спикеров)
+    // Иначе используем админский эндпоинт (для админов)
+    const endpoint = usePublicEndpoint ? `/categories` : `/admin/categories`;
+    return api.get<CategoriesPaginatedResponse>(`${endpoint}?pageNumber=${pageNumber}&limit=${limit}`);
   },
 
   async getCategory(categoryId: number): Promise<Category> {
