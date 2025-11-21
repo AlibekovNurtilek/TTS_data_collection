@@ -170,24 +170,24 @@ export default function AdminBookRecordings() {
 
   return (
     <Layout>
-      <div className="min-h-full bg-gradient-to-b from-background to-muted/20 px-6 py-8">
+      <div className="min-h-full bg-gradient-to-b from-background to-muted/20 px-4 md:px-6 py-6 md:py-8">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
-          <div className="mb-8">
+          <div className="mb-6 md:mb-8">
             <Button
               variant="ghost"
               onClick={() => navigate("/books")}
-              className="mb-4"
+              className="mb-3 md:mb-4"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Books
             </Button>
-            <h1 className="text-4xl font-bold text-foreground mb-2">{bookTitle}</h1>
-            <p className="text-muted-foreground mb-4">Recordings for this book</p>
+            <h1 className="text-2xl md:text-4xl font-bold text-foreground mb-2">{bookTitle}</h1>
+            <p className="text-sm md:text-base text-muted-foreground mb-4">Recordings for this book</p>
             
             {/* Speaker Filter */}
             {recordings && recordings.speakers.length > 0 && (
-              <div className="max-w-xs">
+              <div className="w-full sm:max-w-xs">
                 <Select
                   value={selectedSpeakerId?.toString() || "all"}
                   onValueChange={(value) => {
@@ -213,36 +213,37 @@ export default function AdminBookRecordings() {
 
           {/* Recordings List */}
           {recordings && recordings.items.length > 0 ? (
-            <div className="space-y-4">
+            <div className="space-y-3 md:space-y-4">
               {recordings.items.map((recording) => (
-                <Card key={`${recording.chunk_id}-${recording.speaker_id}`} className="p-6">
-                  <div className="space-y-4">
+                <Card key={`${recording.chunk_id}-${recording.speaker_id}`} className="p-4 md:p-6">
+                  <div className="space-y-3 md:space-y-4">
                     {/* Header */}
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <span className="text-sm font-mono text-muted-foreground">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-2">
+                          <span className="text-xs md:text-sm font-mono text-muted-foreground">
                             #{recording.chunk_order_index}
                           </span>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <User className="h-4 w-4" />
+                          <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
+                            <User className="h-3 w-3 md:h-4 md:w-4" />
                             <span className="font-medium">{recording.speaker_username}</span>
                           </div>
                         </div>
-                        <p className="text-lg leading-relaxed">{recording.chunk_text}</p>
+                        <p className="text-sm md:text-base lg:text-lg leading-relaxed">{recording.chunk_text}</p>
                       </div>
                     </div>
 
                     {/* Info and Controls */}
-                    <div className="flex items-center justify-between pt-4 border-t">
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-3 md:pt-4 border-t">
+                      <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs md:text-sm text-muted-foreground">
                         <span>Duration: {formatDuration(recording.duration)}</span>
-                        <span>•</span>
-                        <span>Recorded: {formatDate(recording.created_at)}</span>
+                        <span className="hidden sm:inline">•</span>
+                        <span className="break-words">Recorded: {formatDate(recording.created_at)}</span>
                       </div>
                       <Button
                         onClick={() => handlePlay(recording)}
                         variant="default"
+                        className="w-full sm:w-auto"
                       >
                         {playingId === recording.id ? (
                           <>

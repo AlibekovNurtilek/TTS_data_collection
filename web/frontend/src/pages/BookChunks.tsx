@@ -127,22 +127,22 @@ export default function BookChunks() {
 
   return (
     <Layout>
-      <div className="p-8">
-        <Button variant="outline" onClick={() => navigate("/books")} className="mb-6 gap-2">
+      <div className="p-4 md:p-8">
+        <Button variant="outline" onClick={() => navigate("/books")} className="mb-4 md:mb-6 gap-2">
           <ArrowLeft className="h-4 w-4" />
           Back to Books
         </Button>
 
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">{book?.title}</h1>
-          <p className="text-muted-foreground">
+        <div className="mb-6 md:mb-8">
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">{book?.title}</h1>
+          <p className="text-sm md:text-base text-muted-foreground">
             Total chunks: {total} | Showing: {chunks.length} on this page
           </p>
         </div>
 
         {/* Search */}
-        <div className="mb-6">
-          <div className="relative max-w-md">
+        <div className="mb-4 md:mb-6">
+          <div className="relative w-full max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search chunks by text..."
@@ -161,14 +161,14 @@ export default function BookChunks() {
           </div>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-3 md:space-y-4">
           {chunks.map((chunk) => (
             <Card key={chunk.id}>
-              <CardContent className="p-6">
-                <div className="flex items-start gap-4">
-                  <Circle className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-1" />
+              <CardContent className="p-4 md:p-6">
+                <div className="flex items-start gap-3 md:gap-4">
+                  <Circle className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground flex-shrink-0 mt-1" />
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 mb-2">
+                    <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-2">
                       <span className="text-xs font-mono bg-muted px-2 py-1 rounded">
                         #{chunk.order_index}
                       </span>
@@ -181,7 +181,7 @@ export default function BookChunks() {
                         </span>
                       )}
                     </div>
-                    <p className="text-foreground leading-relaxed">{chunk.text}</p>
+                    <p className="text-sm md:text-base text-foreground leading-relaxed">{chunk.text}</p>
                   </div>
                 </div>
               </CardContent>

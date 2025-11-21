@@ -306,10 +306,10 @@ export default function Books() {
 
   return (
     <Layout>
-      <div className="min-h-full bg-gradient-to-b from-background to-muted/20 px-6 py-8">
+      <div className="min-h-full bg-gradient-to-b from-background to-muted/20 px-4 md:px-6 py-6 md:py-8">
           {/* Filters and Search with Upload Button */}
-          <div className="mb-6 space-y-4">
-            <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
+          <div className="mb-4 md:mb-6 space-y-3 md:space-y-4">
+            <div className="flex flex-col md:flex-row gap-3 md:gap-4 items-start md:items-center">
               {/* Search */}
               <div className="flex-1 w-full">
                 <div className="relative">
@@ -385,9 +385,10 @@ export default function Books() {
                 }}
               >
                 <DialogTrigger asChild>
-                  <Button className="gap-2 bg-gradient-to-r from-[#0066cc] to-[#0052a3] hover:from-[#0052a3] hover:to-[#004999] text-white shadow-md hover:shadow-lg transition-all font-semibold h-11">
+                  <Button className="gap-2 bg-gradient-to-r from-[#0066cc] to-[#0052a3] hover:from-[#0052a3] hover:to-[#004999] text-white shadow-md hover:shadow-lg transition-all font-semibold h-11 w-full md:w-auto">
                     <Upload className="h-4 w-4" />
-                    Upload Book
+                    <span className="hidden sm:inline">Upload Book</span>
+                    <span className="sm:hidden">Upload</span>
                   </Button>
                 </DialogTrigger>
               <DialogContent className="sm:max-w-lg">
@@ -527,33 +528,33 @@ export default function Books() {
           {/* Books Grid */}
           {books.length > 0 ? (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                 {books.map((book) => (
                 <Card 
                   key={book.id} 
-                  className="studio-shadow-lg border-2 hover:shadow-xl hover:border-[#0066cc]/30 transition-all group cursor-pointer"
+                  className="studio-shadow-lg border-2 hover:shadow-xl hover:border-[#0066cc]/30 transition-all group cursor-pointer overflow-hidden"
                   onClick={() => navigate(`/books/${book.id}/chunks`)}
                 >
                   <CardHeader className="pb-10">
                     <CardTitle className="flex items-center gap-3">
-                      <div className="p-2.5 bg-gradient-to-br from-[#0066cc]/10 to-[#0052a3]/10 rounded-lg group-hover:from-[#0066cc]/20 group-hover:to-[#0052a3]/20 transition-colors">
-                        <BookOpen className="h-5 w-5 text-[#0066cc] flex-shrink-0" />
+                      <div className="p-2.5 bg-gradient-to-br from-[#0066cc]/10 to-[#0052a3]/10 rounded-lg group-hover:from-[#0066cc]/20 group-hover:to-[#0052a3]/20 transition-colors flex-shrink-0">
+                        <BookOpen className="h-5 w-5 text-[#0066cc]" />
                       </div>
-                      <span className="line-clamp-2 text-lg font-semibold leading-tight text-gray-900">{book.title}</span>
+                      <span className="line-clamp-2 text-lg font-semibold leading-tight text-gray-900 min-w-0">{book.title}</span>
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="overflow-hidden">
                     <div className="space-y-4">
                       <div className="space-y-3">
-                        <div className="flex items-center justify-between text-sm pb-2 border-b border-gray-200">
-                          <span className="text-gray-500 font-medium">Category:</span>
-                          <span className="font-semibold text-gray-900">{getCategoryName(book.category_id)}</span>
+                        <div className="flex items-center justify-between text-sm pb-2 border-b border-gray-200 gap-2">
+                          <span className="text-gray-500 font-medium whitespace-nowrap">Category:</span>
+                          <span className="font-semibold text-gray-900 text-right truncate">{getCategoryName(book.category_id)}</span>
                         </div>
                         
                         {/* Assigned Speakers */}
                         <div className="space-y-2">
                           <div className="flex items-center gap-2 text-sm">
-                            <User className="h-4 w-4 text-gray-400" />
+                            <User className="h-4 w-4 text-gray-400 flex-shrink-0" />
                             <span className="text-gray-500 font-medium">Assigned Speakers:</span>
                           </div>
                           {book.assigned_speakers && book.assigned_speakers.length > 0 ? (
@@ -564,12 +565,12 @@ export default function Books() {
                                   className="flex items-center gap-1.5 bg-blue-50 border border-blue-200 rounded-md px-2 py-1"
                                 >
                                   <div className={cn(
-                                    "w-5 h-5 rounded-full flex items-center justify-center text-white text-xs font-semibold bg-gradient-to-br",
+                                    "w-5 h-5 rounded-full flex items-center justify-center text-white text-xs font-semibold bg-gradient-to-br flex-shrink-0",
                                     getAvatarGradient(speaker.username)
                                   )}>
                                     {speaker.username.charAt(0).toUpperCase()}
                                   </div>
-                                  <span className="text-xs font-medium text-gray-700">{speaker.username}</span>
+                                  <span className="text-xs font-medium text-gray-700 truncate">{speaker.username}</span>
                                 </div>
                               ))}
                             </div>
@@ -582,7 +583,7 @@ export default function Books() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50 transition-all"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 transition-all flex-shrink-0"
                           onClick={(e) => {
                             e.stopPropagation();
                             setBookToDelete(book);

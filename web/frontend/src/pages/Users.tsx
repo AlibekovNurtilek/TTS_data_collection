@@ -142,23 +142,24 @@ export default function Users() {
 
   return (
     <Layout>
-      <div className="p-8">
+      <div className="p-4 md:p-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-gradient-to-br from-[#0066cc] to-[#0052a3] rounded-xl shadow-lg">
-              <UsersIcon className="h-6 w-6 text-white" />
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 md:mb-8">
+          <div className="flex items-center gap-3 md:gap-4">
+            <div className="p-2 md:p-3 bg-gradient-to-br from-[#0066cc] to-[#0052a3] rounded-xl shadow-lg">
+              <UsersIcon className="h-5 w-5 md:h-6 md:w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-foreground">Users Management</h1>
-              <p className="text-muted-foreground mt-1">Manage system users and permissions</p>
+              <h1 className="text-2xl md:text-3xl font-bold text-foreground">Users Management</h1>
+              <p className="text-sm md:text-base text-muted-foreground mt-1">Manage system users and permissions</p>
             </div>
           </div>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="gap-2 bg-gradient-to-r from-[#0066cc] to-[#0052a3] hover:from-[#0052a3] hover:to-[#004999] text-white shadow-md hover:shadow-lg transition-all">
+              <Button className="gap-2 bg-gradient-to-r from-[#0066cc] to-[#0052a3] hover:from-[#0052a3] hover:to-[#004999] text-white shadow-md hover:shadow-lg transition-all w-full sm:w-auto">
                 <Plus className="h-4 w-4" />
-                Add New User
+                <span className="hidden sm:inline">Add New User</span>
+                <span className="sm:hidden">Add User</span>
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-md">
@@ -203,62 +204,64 @@ export default function Users() {
 
         {/* Users Table */}
         <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/50 hover:bg-muted/50">
-                <TableHead className="font-semibold text-foreground">ID</TableHead>
-                <TableHead className="font-semibold text-foreground">Username</TableHead>
-                <TableHead className="font-semibold text-foreground">Role</TableHead>
-                <TableHead className="text-right font-semibold text-foreground">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {users.map((user) => (
-                <TableRow key={user.id} className="hover:bg-muted/50 transition-colors">
-                  <TableCell className="font-medium text-muted-foreground">{user.id}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-foreground">{user.username}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      {user.role === "admin" ? (
-                        <>
-                          <span className="capitalize font-medium text-primary bg-primary/10 dark:bg-primary/20 px-2 py-1 rounded-md text-xs">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/50 hover:bg-muted/50">
+                  <TableHead className="font-semibold text-foreground">ID</TableHead>
+                  <TableHead className="font-semibold text-foreground">Username</TableHead>
+                  <TableHead className="font-semibold text-foreground">Role</TableHead>
+                  <TableHead className="text-right font-semibold text-foreground">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {users.map((user) => (
+                  <TableRow key={user.id} className="hover:bg-muted/50 transition-colors">
+                    <TableCell className="font-medium text-muted-foreground">{user.id}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-foreground">{user.username}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        {user.role === "admin" ? (
+                          <>
+                            <span className="capitalize font-medium text-primary bg-primary/10 dark:bg-primary/20 px-2 py-1 rounded-md text-xs">
+                              {user.role}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="capitalize font-medium text-muted-foreground bg-muted px-2 py-1 rounded-md text-xs">
                             {user.role}
                           </span>
-                        </>
-                      ) : (
-                        <span className="capitalize font-medium text-muted-foreground bg-muted px-2 py-1 rounded-md text-xs">
-                          {user.role}
-                        </span>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {user.role !== "admin" && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10 transition-all"
+                          onClick={() => {
+                            setUserToDelete(user);
+                            setDeleteDialogOpen(true);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 sm:mr-1" />
+                          <span className="hidden sm:inline">Delete</span>
+                        </Button>
                       )}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {user.role !== "admin" && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10 transition-all"
-                        onClick={() => {
-                          setUserToDelete(user);
-                          setDeleteDialogOpen(true);
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4 mr-1" />
-                        Delete
-                      </Button>
-                    )}
-                    {user.role === "admin" && (
-                      <span className="text-xs text-muted-foreground italic">Protected</span>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                      {user.role === "admin" && (
+                        <span className="text-xs text-muted-foreground italic">Protected</span>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </div>
 
         {users.length > 0 && (

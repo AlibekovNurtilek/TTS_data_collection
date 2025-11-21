@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { assignmentsService } from "@/services/assignments";
 import { categoriesService } from "@/services/categories";
@@ -66,8 +67,8 @@ export default function SpeakerBooks() {
       setCategories(categoriesData.items);
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to load categories",
+        title: "Ката",
+        description: "Категорияларды жүктөөдө ката",
         variant: "destructive",
       });
     }
@@ -83,8 +84,8 @@ export default function SpeakerBooks() {
       setSpeakerData(data);
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to load books",
+        title: "Ката",
+        description: "Китептерди жүктөөдө ката",
         variant: "destructive",
       });
     } finally {
@@ -117,7 +118,7 @@ export default function SpeakerBooks() {
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading...</p>
+            <p className="text-muted-foreground">Жүктөлүүдө...</p>
           </div>
         </div>
       </Layout>
@@ -126,21 +127,16 @@ export default function SpeakerBooks() {
 
   return (
     <Layout>
-      <div className="min-h-full bg-gradient-to-b from-background to-muted/20 px-6 py-8">
-          <div className="mb-10">
-            <h1 className="text-4xl font-bold text-foreground mb-2 tracking-tight">My Books</h1>
-            <p className="text-muted-foreground text-lg">Books assigned to you for recording</p>
-          </div>
-
+      <div className="min-h-full bg-gradient-to-b from-background to-muted/20 px-4 md:px-6 py-6 md:py-8">
           {/* Filters and Search */}
-          <div className="mb-6 space-y-4">
-            <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
+          <div className="mb-4 md:mb-6 space-y-3 md:space-y-4">
+            <div className="flex flex-col md:flex-row gap-3 md:gap-4 items-start md:items-center">
               {/* Search */}
               <div className="flex-1 w-full">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Search books by title..."
+                    placeholder="Китептерди аталышы боюнча издөө..."
                     value={searchInput}
                     onChange={(e) => handleSearch(e.target.value)}
                     className="pl-10 h-11"
@@ -154,10 +150,10 @@ export default function SpeakerBooks() {
                 onValueChange={handleCategoryFilter}
               >
                 <SelectTrigger className="w-full md:w-[200px] h-11">
-                  <SelectValue placeholder="All Categories" />
+                  <SelectValue placeholder="Бардык категориялар" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
+                  <SelectItem value="all">Бардык категориялар</SelectItem>
                   {categories.map((category) => (
                     <SelectItem key={category.id} value={category.id.toString()}>
                       {category.name}
@@ -174,57 +170,71 @@ export default function SpeakerBooks() {
                   className="h-11"
                 >
                   <X className="h-4 w-4 mr-2" />
-                  Clear
+                  Тазалоо
                 </Button>
               )}
             </div>
           </div>
 
           {speakerData && speakerData.assigned_books.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
               {speakerData.assigned_books.map((book) => (
                 <Card 
                   key={book.id} 
-                  className="studio-shadow-lg border-2 hover:shadow-xl hover:border-primary/30 transition-all group"
+                  className="studio-shadow-lg border-2 hover:shadow-xl hover:border-primary/30 transition-all group overflow-hidden"
                 >
                   <CardHeader className="pb-4">
-                    <CardTitle className="flex items-start gap-3">
-                      <div className="p-2.5 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
-                        <BookOpen className="h-5 w-5 text-primary flex-shrink-0" />
+                    <CardTitle className="flex items-center gap-3">
+                      <div className="p-2.5 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors flex-shrink-0">
+                        <BookOpen className="h-5 w-5 text-primary" />
                       </div>
-                      <span className="line-clamp-2 text-lg font-semibold leading-tight">{book.title}</span>
+                      <span className="line-clamp-2 text-lg font-semibold leading-tight min-w-0">{book.title}</span>
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="overflow-hidden">
                     <div className="space-y-4">
                       <div className="space-y-3">
-                        <div className="flex items-center justify-between text-sm pb-2 border-b border-border">
-                          <span className="text-muted-foreground font-medium">Category:</span>
-                          <span className="font-semibold text-foreground">{getCategoryName(book.category_id)}</span>
+                        <div className="flex items-center justify-between text-sm gap-2">
+                          <span className="text-muted-foreground font-medium whitespace-nowrap">Категория:</span>
+                          <span className="font-semibold text-foreground text-right truncate">{getCategoryName(book.category_id)}</span>
                         </div>
-                      <div className="flex items-center justify-between text-sm pb-3 border-b border-border">
-                        <span className="text-muted-foreground font-medium">Format:</span>
-                        <span className="font-mono bg-muted px-3 py-1.5 rounded-lg text-xs font-semibold border border-border">
-                          {book.file_type.toUpperCase()}
-                        </span>
+                        
+                        {/* Progress Bar */}
+                        {book.total_chunks !== undefined && book.total_chunks > 0 && (
+                          <div className="space-y-2">
+                            <Progress 
+                              value={book.progress_percentage || 0} 
+                              className="h-2 w-full"
+                            />
+                            <div className="flex items-center justify-between text-sm gap-2">
+                              <span className="font-semibold text-foreground whitespace-nowrap">
+                                {book.recorded_chunks || 0} / {book.total_chunks}
+                              </span>
+                              {book.progress_percentage !== undefined && (
+                                <span className="text-muted-foreground whitespace-nowrap">
+                                  ({book.progress_percentage.toFixed(2)}%)
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        )}
                       </div>
-                      </div>
-                      <div className="flex gap-2">
+                      <div className="flex flex-col gap-2 w-full">
                         <Button
                           variant="outline"
-                          className="flex-1 gap-2 h-11 font-semibold border-2"
+                          className="w-full gap-2 h-11 font-semibold border-2"
                           onClick={() => navigate(`/speaker/books/${book.id}/chunks`)}
                         >
-                          <Eye className="h-4 w-4" />
-                          View
+                          <Eye className="h-4 w-4 flex-shrink-0" />
+                          <span>Көрүү</span>
                         </Button>
-                      <Button
-                          className="flex-1 gap-2 h-11 font-semibold shadow-md hover:shadow-lg transition-all"
-                        onClick={() => navigate(`/record/${book.id}`)}
-                      >
-                        Start Recording
-                        <ArrowRight className="h-4 w-4" />
-                      </Button>
+                        <Button
+                          className="w-full gap-2 h-11 font-semibold shadow-md hover:shadow-lg transition-all"
+                          onClick={() => navigate(`/record/${book.id}`)}
+                        >
+                          <span>Жаздырууну баштоо</span>
+                          <ArrowRight className="h-4 w-4 flex-shrink-0" />
+                        </Button>
                       </div>
                     </div>
                   </CardContent>
@@ -238,12 +248,12 @@ export default function SpeakerBooks() {
                   <BookOpen className="h-10 w-10 text-muted-foreground" />
                 </div>
                 <h3 className="text-2xl font-semibold text-foreground mb-3">
-                  {selectedCategoryId || searchQuery ? "No Books Found" : "No Books Assigned"}
+                  {selectedCategoryId || searchQuery ? "Китептер табылган жок" : "Китептер берилген жок"}
                 </h3>
                 <p className="text-muted-foreground text-lg max-w-md mx-auto">
                   {selectedCategoryId || searchQuery
-                    ? "Try adjusting your filters or search query."
-                    : "You don't have any books assigned yet. Contact your administrator to get started."}
+                    ? "Фильтрлерди же издөө суроосун тууралаңыз."
+                    : "Сизге азырынча китептер берилген жок. Баштоо үчүн администраторго кайрылыңыз."}
                 </p>
                 {(selectedCategoryId || searchQuery) && (
                   <Button
@@ -252,7 +262,7 @@ export default function SpeakerBooks() {
                     className="mt-4"
                   >
                     <X className="h-4 w-4 mr-2" />
-                    Clear Filters
+                    Фильтрлерди тазалоо
                   </Button>
                 )}
               </CardContent>

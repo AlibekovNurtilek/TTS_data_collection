@@ -183,15 +183,15 @@ export default function Assignments() {
 
   return (
     <Layout>
-      <div className="p-8">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-gradient-to-br from-[#0066cc] to-[#0052a3] rounded-xl shadow-lg">
-              <UserCheck className="h-6 w-6 text-white" />
+      <div className="p-4 md:p-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 md:mb-8">
+          <div className="flex items-center gap-3 md:gap-4">
+            <div className="p-2 md:p-3 bg-gradient-to-br from-[#0066cc] to-[#0052a3] rounded-xl shadow-lg">
+              <UserCheck className="h-5 w-5 md:h-6 md:w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-foreground">Assignments</h1>
-              <p className="text-muted-foreground mt-1">Assign books to speakers</p>
+              <h1 className="text-2xl md:text-3xl font-bold text-foreground">Assignments</h1>
+              <p className="text-sm md:text-base text-muted-foreground mt-1">Assign books to speakers</p>
             </div>
           </div>
           <Dialog
@@ -204,9 +204,10 @@ export default function Assignments() {
             }}
           >
             <DialogTrigger asChild>
-              <Button className="gap-2 bg-gradient-to-r from-[#0066cc] to-[#0052a3] hover:from-[#0052a3] hover:to-[#004999] text-white shadow-md hover:shadow-lg transition-all font-semibold">
+              <Button className="gap-2 bg-gradient-to-r from-[#0066cc] to-[#0052a3] hover:from-[#0052a3] hover:to-[#004999] text-white shadow-md hover:shadow-lg transition-all font-semibold w-full sm:w-auto">
                 <Plus className="h-4 w-4" />
-                New Assignment
+                <span className="hidden sm:inline">New Assignment</span>
+                <span className="sm:hidden">New</span>
               </Button>
             </DialogTrigger>
             <DialogContent>
@@ -261,52 +262,54 @@ export default function Assignments() {
         </div>
 
         <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/50 hover:bg-muted/50">
-                <TableHead className="font-semibold text-foreground">Book</TableHead>
-                <TableHead className="font-semibold text-foreground">Assigned Speakers</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {booksWithSpeakers.map((book) => (
-                <TableRow key={book.id} className="hover:bg-muted/50 transition-colors">
-                  <TableCell className="font-semibold text-foreground">{book.title}</TableCell>
-                  <TableCell>
-                    {book.assigned_speakers.length > 0 ? (
-                      <div className="flex flex-wrap gap-2">
-                        {book.assigned_speakers.map((speaker) => (
-                          <div
-                            key={speaker.id}
-                            className="inline-flex items-center gap-1.5 bg-primary/10 dark:bg-primary/20 border border-primary/20 dark:border-primary/30 rounded-md px-3 py-1.5 group hover:bg-primary/20 dark:hover:bg-primary/30 transition-colors"
-                          >
-                            <div className={cn(
-                              "w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-semibold bg-gradient-to-br",
-                              getAvatarGradient(speaker.username)
-                            )}>
-                              {speaker.username.charAt(0).toUpperCase()}
-                            </div>
-                            <span className="text-sm font-medium text-foreground">{speaker.username}</span>
-                            <button
-                              onClick={() =>
-                                openDeleteDialog(book.id, book.title, speaker.id, speaker.username)
-                              }
-                              className="ml-1 p-0.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
-                              title="Remove assignment"
-                            >
-                              <X className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <span className="text-muted-foreground text-sm italic">No speakers assigned</span>
-                    )}
-                  </TableCell>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/50 hover:bg-muted/50">
+                  <TableHead className="font-semibold text-foreground">Book</TableHead>
+                  <TableHead className="font-semibold text-foreground">Assigned Speakers</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {booksWithSpeakers.map((book) => (
+                  <TableRow key={book.id} className="hover:bg-muted/50 transition-colors">
+                    <TableCell className="font-semibold text-foreground min-w-[200px]">{book.title}</TableCell>
+                    <TableCell>
+                      {book.assigned_speakers.length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                          {book.assigned_speakers.map((speaker) => (
+                            <div
+                              key={speaker.id}
+                              className="inline-flex items-center gap-1.5 bg-primary/10 dark:bg-primary/20 border border-primary/20 dark:border-primary/30 rounded-md px-2 md:px-3 py-1 md:py-1.5 group hover:bg-primary/20 dark:hover:bg-primary/30 transition-colors"
+                            >
+                              <div className={cn(
+                                "w-5 h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center text-white text-xs font-semibold bg-gradient-to-br",
+                                getAvatarGradient(speaker.username)
+                              )}>
+                                {speaker.username.charAt(0).toUpperCase()}
+                              </div>
+                              <span className="text-xs md:text-sm font-medium text-foreground">{speaker.username}</span>
+                              <button
+                                onClick={() =>
+                                  openDeleteDialog(book.id, book.title, speaker.id, speaker.username)
+                                }
+                                className="ml-1 p-0.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
+                                title="Remove assignment"
+                              >
+                                <X className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground text-sm italic">No speakers assigned</span>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </div>
 
         {booksWithSpeakers.length > 0 && (

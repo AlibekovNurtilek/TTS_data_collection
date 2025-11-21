@@ -6,6 +6,8 @@ from app.models.user import User, UserRole
 from app.repositories.book_assignment_repository import BookAssignmentRepository
 from app.repositories.book_repository import BookRepository
 from app.repositories.user_repository import UserRepository
+from app.repositories.chunk_repository import ChunkRepository
+from app.repositories.recording_repository import RecordingRepository
 from app.schemas.book_assignment import (
     BookWithSpeakersResponse,
     SpeakerWithBooksResponse,
@@ -117,10 +119,43 @@ class BookAssignmentService:
         
         books = self.assignment_repo.get_assignments_by_speaker(self.db, speaker_id)
         
+        # Получаем статистику для каждой книги
+        chunk_repo = ChunkRepository()
+        recording_repo = RecordingRepository()
+        
+        books_with_stats = []
+        for book in books:
+            # Общее количество чанков
+            total_chunks = chunk_repo.count_by_book(self.db, book.id)
+            
+            # Получаем все чанки книги
+            from app.models.chunk import Chunk
+            all_chunks = self.db.query(Chunk).filter(Chunk.book_id == book.id).all()
+            
+            # Подсчитываем записанные чанки
+            recorded_count = 0
+            for chunk in all_chunks:
+                recording = recording_repo.get_by_chunk_and_speaker(
+                    self.db,
+                    chunk.id,
+                    speaker_id
+                )
+                if recording:
+                    recorded_count += 1
+            
+            unrecorded_count = total_chunks - recorded_count
+            progress_percentage = (recorded_count / total_chunks * 100) if total_chunks > 0 else 0.0
+            
+            book_info = BookInfo.model_validate(book)
+            book_info.total_chunks = total_chunks
+            book_info.recorded_chunks = recorded_count
+            book_info.unrecorded_chunks = unrecorded_count
+            book_info.progress_percentage = round(progress_percentage, 2)
+            
+            books_with_stats.append(book_info)
+        
         speaker_data = SpeakerWithBooksResponse.model_validate(speaker)
-        speaker_data.assigned_books = [
-            BookInfo.model_validate(book) for book in books
-        ]
+        speaker_data.assigned_books = books_with_stats
         
         return speaker_data
     
@@ -145,10 +180,43 @@ class BookAssignmentService:
             search=search
         )
         
+        # Получаем статистику для каждой книги
+        chunk_repo = ChunkRepository()
+        recording_repo = RecordingRepository()
+        
+        books_with_stats = []
+        for book in books:
+            # Общее количество чанков
+            total_chunks = chunk_repo.count_by_book(self.db, book.id)
+            
+            # Получаем все чанки книги
+            from app.models.chunk import Chunk
+            all_chunks = self.db.query(Chunk).filter(Chunk.book_id == book.id).all()
+            
+            # Подсчитываем записанные чанки
+            recorded_count = 0
+            for chunk in all_chunks:
+                recording = recording_repo.get_by_chunk_and_speaker(
+                    self.db,
+                    chunk.id,
+                    user_id
+                )
+                if recording:
+                    recorded_count += 1
+            
+            unrecorded_count = total_chunks - recorded_count
+            progress_percentage = (recorded_count / total_chunks * 100) if total_chunks > 0 else 0.0
+            
+            book_info = BookInfo.model_validate(book)
+            book_info.total_chunks = total_chunks
+            book_info.recorded_chunks = recorded_count
+            book_info.unrecorded_chunks = unrecorded_count
+            book_info.progress_percentage = round(progress_percentage, 2)
+            
+            books_with_stats.append(book_info)
+        
         user_data = SpeakerWithBooksResponse.model_validate(user)
-        user_data.assigned_books = [
-            BookInfo.model_validate(book) for book in books
-        ]
+        user_data.assigned_books = books_with_stats
         
         return user_data
     

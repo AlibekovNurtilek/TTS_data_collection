@@ -37,6 +37,10 @@ class BookInfo(BaseModel):
     original_filename: str
     file_type: str
     category_id: int
+    total_chunks: int = 0
+    recorded_chunks: int = 0
+    unrecorded_chunks: int = 0
+    progress_percentage: float = 0.0
 
     class Config:
         from_attributes = True

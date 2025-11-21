@@ -242,26 +242,26 @@ export default function RecordBook() {
 
   return (
     <Layout>
-      <div className="min-h-full bg-gradient-to-b from-background to-muted/20 pb-32">
-        <div className="px-6 py-8 max-w-8xl mx-auto">
+      <div className="min-h-full bg-gradient-to-b from-background to-muted/20 pb-32 md:pb-32">
+        <div className="px-4 md:px-6 py-6 md:py-8 max-w-8xl mx-auto">
           {/* Header - компактное название книги */}
-          <div className="mb-16">
-            <div className="inline-block px-6 py-3 bg-muted/60 border border-border/50 rounded-lg mx-auto">
-              <h1 className="text-lg font-medium text-muted-foreground tracking-wide">
+          <div className="mb-8 md:mb-16">
+            <div className="inline-block px-4 md:px-6 py-2 md:py-3 bg-muted/60 border border-border/50 rounded-lg mx-auto">
+              <h1 className="text-sm md:text-lg font-medium text-muted-foreground tracking-wide text-center">
                 {book?.title}
               </h1>
             </div>
           </div>
 
           {/* Text Content */}
-          <div className="dark:bg-gradient-to-br dark:from-muted/50 dark:to-muted/30 p-8 rounded-xl mb-4">
-            <p className="text-2xl leading-relaxed text-foreground font-normal tracking-wide text-center">
+          <div className="dark:bg-gradient-to-br dark:from-muted/50 dark:to-muted/30 p-4 md:p-8 rounded-xl mb-4">
+            <p className="text-lg md:text-2xl leading-relaxed text-foreground font-normal tracking-wide text-center">
               {chunk.text}
             </p>
           </div>
 
           {/* Waveform Visualization - всегда показываем */}
-          <div className="mb-8" style={{ minHeight: '180px' }}>
+          <div className="mb-6 md:mb-8" style={{ minHeight: '180px' }}>
             {audioBlob && !isRecording && audioUrl ? (
               <div className="mt-16">  {/* <<< добавил обёртку + margin-top */}
               <Waveform
@@ -287,7 +287,7 @@ export default function RecordBook() {
       </div>
 
       {/* Fixed Recording Controls - всегда внизу экрана */}
-      <div className="fixed bottom-0 left-72 right-0 h-32 bg-background/95 backdrop-blur-sm z-50">
+      <div className="fixed bottom-0 left-0 md:left-72 right-0 h-32 bg-background/95 backdrop-blur-sm z-50">
         <div className="h-full flex items-center justify-center px-6 max-w-8xl mx-auto">
           <div className="flex items-center justify-center w-full" style={{ minHeight: '80px' }}>
             {!isRecording && !audioBlob && (
@@ -317,13 +317,13 @@ export default function RecordBook() {
             )}
 
             {audioBlob && !isRecording && (
-              <div className="flex items-center gap-3 flex-wrap justify-center">
+              <div className="flex flex-col sm:flex-row items-center gap-3 flex-wrap justify-center w-full px-4">
                 
                 <Button 
                   onClick={clearRecording} 
                   size="lg" 
                   variant="secondary"
-                  className="gap-2 h-12 px-6 min-w-[180px] border-2 border-orange-500/50 dark:border-orange-500/30 rounded-full bg-transparent hover:bg-orange-50 dark:bg-[#1A1A1A] dark:hover:bg-[#2A2A2A] text-orange-600 dark:text-orange-400"
+                  className="gap-2 h-12 px-4 md:px-6 w-full sm:w-auto sm:min-w-[180px] border-2 border-orange-500/50 dark:border-orange-500/30 rounded-full bg-transparent hover:bg-orange-50 dark:bg-[#1A1A1A] dark:hover:bg-[#2A2A2A] text-orange-600 dark:text-orange-400"
                 >
                   <RotateCcw className="h-5 w-5" />
                   Кайра жаз
@@ -333,7 +333,7 @@ export default function RecordBook() {
                   onClick={handlePlayPause} 
                   size="lg" 
                   variant="secondary" 
-                  className="gap-2 h-12 px-10 border-2 border-blue-500/50 dark:border-blue-500/30 rounded-full bg-transparent hover:bg-blue-50 dark:bg-[#1A1A1A] dark:hover:bg-[#2A2A2A] text-blue-600 dark:text-blue-400"
+                  className="gap-2 h-12 px-6 md:px-10 w-full sm:w-auto border-2 border-blue-500/50 dark:border-blue-500/30 rounded-full bg-transparent hover:bg-blue-50 dark:bg-[#1A1A1A] dark:hover:bg-[#2A2A2A] text-blue-600 dark:text-blue-400"
                 >
                   {isPlaying ? (
                     <>
@@ -353,11 +353,12 @@ export default function RecordBook() {
                   onClick={handleUpload}
                   size="lg"
                   variant="secondary"
-                  className="gap-2 h-12 px-6 min-w-[180px] border-2 border-green-500/50 dark:border-green-500/30 rounded-full bg-transparent hover:bg-green-50 dark:bg-[#1A1A1A] dark:hover:bg-[#2A2A2A] text-green-600 dark:text-green-400"
+                  className="gap-2 h-12 px-4 md:px-6 w-full sm:w-auto sm:min-w-[180px] border-2 border-green-500/50 dark:border-green-500/30 rounded-full bg-transparent hover:bg-green-50 dark:bg-[#1A1A1A] dark:hover:bg-[#2A2A2A] text-green-600 dark:text-green-400"
                   disabled={uploading}
                 >
                   <Save className="h-5 w-5" />
-                  {uploading ? "Сакталууда..." : "Сактап, кийинкиге"}
+                  <span className="hidden sm:inline">{uploading ? "Сакталууда..." : "Сактап, кийинкиге"}</span>
+                  <span className="sm:hidden">{uploading ? "Сакталууда..." : "Сактоо"}</span>
                 </Button>
               </div>
             )}

@@ -43,13 +43,13 @@ export default function Dashboard() {
 
   return (
     <Layout>
-      <div className="min-h-full bg-gradient-to-b from-background to-muted/20 px-6 py-8">
-          <div className="mb-10">
-            <h1 className="text-4xl font-bold text-foreground mb-2 tracking-tight">Dashboard</h1>
-            <p className="text-muted-foreground text-lg">Overview of your TTS studio</p>
+      <div className="min-h-full bg-gradient-to-b from-background to-muted/20 px-4 md:px-6 py-6 md:py-8">
+          <div className="mb-6 md:mb-10">
+            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2 tracking-tight">Dashboard</h1>
+            <p className="text-muted-foreground text-base md:text-lg">Overview of your TTS studio</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
             {statCards.map((stat) => {
               const Icon = stat.icon;
               return (

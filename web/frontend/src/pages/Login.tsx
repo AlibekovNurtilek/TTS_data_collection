@@ -63,8 +63,8 @@ export default function Login() {
   };
 
   return (
-    <div className="login-page-light min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0066cc] to-[#004999] p-5">
-      <div className="w-full max-w-[1000px] bg-white rounded-[30px] overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.3)] flex flex-col md:flex-row">
+    <div className="login-page-light min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0066cc] to-[#004999] p-4 md:p-5">
+      <div className="w-full max-w-[1000px] bg-white rounded-[20px] md:rounded-[30px] overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.3)] flex flex-col md:flex-row">
         {/* Left Panel - Welcome Section */}
         <div className="hidden md:flex w-full md:w-1/2 bg-gradient-to-br from-[#0066cc] to-[#0052a3] p-10 md:p-20 relative overflow-hidden flex-col justify-center login-welcome-section">
           {/* Decorative circles */}
@@ -85,10 +85,10 @@ export default function Login() {
         </div>
 
         {/* Right Panel - Login Form */}
-        <div className="w-full md:w-1/2 p-10 md:p-20 bg-white flex items-center">
+        <div className="w-full md:w-1/2 p-6 md:p-10 lg:p-20 bg-white flex items-center">
           <div className="w-full">
-            <h3 className="text-3xl md:text-4xl font-semibold text-[#1a1a1a] mb-2.5">Sign in</h3>
-            <p className="text-[13px] text-[#666] mb-8">
+            <h3 className="text-2xl md:text-3xl lg:text-4xl font-semibold text-[#1a1a1a] mb-2.5">Sign in</h3>
+            <p className="text-xs md:text-[13px] text-[#666] mb-6 md:mb-8">
               Enter your credentials to access your account
             </p>
 

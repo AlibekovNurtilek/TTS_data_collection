@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { speakersService } from "@/services/speakers";
 import { API_BASE_URL } from "@/lib/api";
@@ -155,32 +156,30 @@ export default function SpeakerBookChunks() {
 
   return (
     <Layout>
-      <div className="min-h-full bg-gradient-to-b from-background to-muted/20 px-6 py-8">
+      <div className="min-h-full bg-gradient-to-b from-background to-muted/20 px-4 md:px-6 py-6 md:py-8">
         {/* Header */}
-        <div className="mb-6">
-          <Button
-            variant="ghost"
-            onClick={() => navigate("/")}
-            className="mb-4"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Books
-          </Button>
+        <div className="mb-4 md:mb-6">
           <div>
-            <h1 className="text-4xl font-bold text-foreground mb-2 tracking-tight">
+            <h1 className="text-2xl md:text-4xl font-bold text-foreground mb-2 tracking-tight">
               {book?.title || "Book Chunks"}
             </h1>
-            {book && (
-              <p className="text-muted-foreground text-lg">
-                Progress: {book.recorded_chunks} / {book.total_chunks} chunks recorded ({book.progress_percentage}%)
-              </p>
+            {book && book.total_chunks > 0 && (
+              <div className="space-y-2">
+                <p className="text-sm md:text-base text-muted-foreground">
+                  Progress: {book.recorded_chunks} / {book.total_chunks} chunks recorded ({book.progress_percentage}%)
+                </p>
+                <Progress 
+                  value={book.progress_percentage || 0} 
+                  className="h-2 max-w-md"
+                />
+              </div>
             )}
           </div>
         </div>
 
         {/* Filters */}
-        <div className="mb-6 space-y-4">
-          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
+        <div className="mb-4 md:mb-6 space-y-3 md:space-y-4">
+          <div className="flex flex-col md:flex-row gap-3 md:gap-4 items-start md:items-center">
             {/* Search */}
             <div className="flex-1 w-full">
               <div className="relative">
@@ -223,21 +222,21 @@ export default function SpeakerBookChunks() {
         {/* Chunks List */}
         {chunks.length > 0 ? (
           <>
-            <div className="space-y-3 mb-6">
+            <div className="space-y-3 mb-4 md:mb-6">
               {chunks.map((chunk) => (
                 <Card
                   key={chunk.id}
                   className="studio-shadow-lg border-2 border-border"
                 >
-                  <CardContent className="p-4">
+                  <CardContent className="p-3 md:p-4">
                     {/* Header with status */}
-                    <div className="flex items-center gap-2 mb-3">
+                    <div className="flex flex-wrap items-center gap-2 mb-3">
                       {chunk.is_recorded_by_me ? (
                         <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
                       ) : (
                         <Circle className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                       )}
-                      <span className="font-semibold text-sm text-foreground whitespace-nowrap">
+                      <span className="font-semibold text-xs md:text-sm text-foreground whitespace-nowrap">
                         Chunk #{chunk.order_index}
                       </span>
                       {chunk.is_recorded_by_me && (
@@ -254,7 +253,7 @@ export default function SpeakerBookChunks() {
 
                     {/* Text Content */}
                     <div className="mb-3">
-                      <p className="text-sm leading-relaxed text-foreground">
+                      <p className="text-xs md:text-sm leading-relaxed text-foreground">
                         {chunk.text}
                       </p>
                     </div>

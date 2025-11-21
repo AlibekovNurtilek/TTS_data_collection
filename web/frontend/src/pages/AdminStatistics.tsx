@@ -69,18 +69,18 @@ export default function AdminStatistics() {
 
   return (
     <Layout>
-      <div className="min-h-full bg-gradient-to-b from-background to-muted/20 px-6 py-8">
+      <div className="min-h-full bg-gradient-to-b from-background to-muted/20 px-4 md:px-6 py-6 md:py-8">
         <div className="max-w-7xl mx-auto">
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold text-foreground mb-2">Statistics</h1>
-            <p className="text-muted-foreground">Overall recording statistics</p>
+          <div className="mb-6 md:mb-8">
+            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">Statistics</h1>
+            <p className="text-sm md:text-base text-muted-foreground">Overall recording statistics</p>
           </div>
 
           {/* Filters */}
-          <Card className="mb-6">
-            <CardContent className="pt-6">
-              <div className="flex flex-wrap gap-4 items-end">
-                <div className="flex-1 min-w-[200px]">
+          <Card className="mb-4 md:mb-6">
+            <CardContent className="pt-4 md:pt-6">
+              <div className="flex flex-col sm:flex-row flex-wrap gap-3 md:gap-4 items-end">
+                <div className="flex-1 w-full sm:min-w-[200px]">
                   <Label>Period</Label>
                   <Select
                     value={period || "all"}
@@ -113,7 +113,7 @@ export default function AdminStatistics() {
 
                 {period === "custom" && (
                   <>
-                    <div className="flex-1 min-w-[200px]">
+                    <div className="flex-1 w-full sm:min-w-[200px]">
                       <Label>Start Date</Label>
                       <Input
                         type="date"
@@ -121,7 +121,7 @@ export default function AdminStatistics() {
                         onChange={(e) => setStartDate(e.target.value)}
                       />
                     </div>
-                    <div className="flex-1 min-w-[200px]">
+                    <div className="flex-1 w-full sm:min-w-[200px]">
                       <Label>End Date</Label>
                       <Input
                         type="date"
@@ -132,13 +132,13 @@ export default function AdminStatistics() {
                   </>
                 )}
 
-                <Button onClick={loadStatistics}>Apply</Button>
+                <Button onClick={loadStatistics} className="w-full sm:w-auto">Apply</Button>
               </div>
             </CardContent>
           </Card>
 
           {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Duration</CardTitle>
@@ -191,7 +191,7 @@ export default function AdminStatistics() {
           </div>
 
           {/* Charts */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-6 md:mb-8">
             {/* Duration by Period */}
             {statistics.by_period.length > 0 && (
               <Card>
@@ -287,7 +287,7 @@ export default function AdminStatistics() {
           </div>
 
           {/* Tables */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
             {/* Speakers Table */}
             {statistics.by_speaker.length > 0 && (
               <Card>

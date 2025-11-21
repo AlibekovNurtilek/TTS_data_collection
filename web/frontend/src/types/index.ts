@@ -109,6 +109,10 @@ export interface BookInfo {
   original_filename: string;
   file_type: string;
   category_id: number;
+  total_chunks?: number;
+  recorded_chunks?: number;
+  unrecorded_chunks?: number;
+  progress_percentage?: number;
 }
 
 export interface SpeakerWithBooks extends User {
