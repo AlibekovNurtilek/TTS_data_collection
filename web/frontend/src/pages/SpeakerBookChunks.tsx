@@ -13,9 +13,8 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { speakersService } from "@/services/speakers";
-import { recordingsService } from "@/services/recordings";
-import { Waveform } from "@/components/Waveform";
-import { ArrowLeft, Search, X, CheckCircle2, Circle, Play, Pause } from "lucide-react";
+import { API_BASE_URL } from "@/lib/api";
+import { ArrowLeft, Search, X, CheckCircle2, Circle } from "lucide-react";
 import type { SpeakerChunk, BookWithStatistics } from "@/types";
 import { Pagination } from "@/components/Pagination";
 import { useAppSelector } from "@/store/hooks";
@@ -40,9 +39,6 @@ export default function SpeakerBookChunks() {
   const [chunks, setChunks] = useState<SpeakerChunk[]>([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
-  const [audioUrls, setAudioUrls] = useState<Map<number, string>>(new Map());
-  const [playingId, setPlayingId] = useState<number | null>(null);
-  const [isPlaying, setIsPlaying] = useState<Map<number, boolean>>(new Map());
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -123,38 +119,6 @@ export default function SpeakerBookChunks() {
     };
   }, [searchInput, filter, setSearchParams]);
 
-  // Загружаем аудио для записанных чанков
-  useEffect(() => {
-    const loadAudioForChunks = async () => {
-      // Cleanup предыдущие URL перед загрузкой новых
-      audioUrls.forEach((url) => URL.revokeObjectURL(url));
-      
-      const newAudioUrls = new Map<number, string>();
-      
-      for (const chunk of chunks) {
-        if (chunk.is_recorded_by_me && chunk.my_recording?.id) {
-          try {
-            const audioUrl = await recordingsService.getRecordingAudio(chunk.my_recording.id);
-            newAudioUrls.set(chunk.id, audioUrl);
-          } catch (error) {
-            // Игнорируем ошибки загрузки аудио для отдельных чанков
-          }
-        }
-      }
-      
-      setAudioUrls(newAudioUrls);
-    };
-
-    if (chunks.length > 0) {
-      loadAudioForChunks();
-    }
-
-    // Cleanup: revoke object URLs when component unmounts
-    return () => {
-      audioUrls.forEach((url) => URL.revokeObjectURL(url));
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chunks]);
 
   const handlePageChange = (newPageNumber: number) => {
     setSearchParams({ page: newPageNumber.toString(), filter });
@@ -166,27 +130,6 @@ export default function SpeakerBookChunks() {
     setSearchParams({ page: "1", filter: newFilter });
   };
 
-  const handlePlayPause = (chunkId: number) => {
-    if (playingId === chunkId) {
-      setIsPlaying((prev) => {
-        const newMap = new Map(prev);
-        newMap.set(chunkId, !prev.get(chunkId));
-        return newMap;
-      });
-    } else {
-      setIsPlaying((prev) => {
-        const newMap = new Map(prev);
-        newMap.set(playingId!, false);
-        newMap.set(chunkId, true);
-        return newMap;
-      });
-      setPlayingId(chunkId);
-    }
-  };
-
-  const handleSeek = () => {
-    // Wavesurfer сам обрабатывает seek
-  };
 
   const clearFilters = () => {
     setSearchInput("");
@@ -280,94 +223,52 @@ export default function SpeakerBookChunks() {
         {/* Chunks List */}
         {chunks.length > 0 ? (
           <>
-            <div className="space-y-4 mb-6">
+            <div className="space-y-3 mb-6">
               {chunks.map((chunk) => (
                 <Card
                   key={chunk.id}
-                  className={`studio-shadow-lg border-2 transition-all ${
-                    chunk.is_recorded_by_me
-                      ? "border-green-500/30 bg-green-50/50 dark:bg-green-950/20"
-                      : "border-border"
-                  }`}
+                  className="studio-shadow-lg border-2 border-border"
                 >
-                  <CardContent className="p-6">
+                  <CardContent className="p-4">
                     {/* Header with status */}
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        {chunk.is_recorded_by_me ? (
-                          <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0" />
-                        ) : (
-                          <Circle className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                        )}
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold text-foreground">
-                              Chunk #{chunk.order_index}
-                            </span>
-                            {chunk.is_recorded_by_me && (
-                              <span className="px-2 py-0.5 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 text-xs font-medium rounded-full">
-                                Recorded
-                              </span>
-                            )}
-                          </div>
-                          {chunk.estimated_duration && (
-                            <p className="text-sm text-muted-foreground">
-                              Estimated: {Math.round(chunk.estimated_duration)}s
-                            </p>
-                          )}
-                        </div>
-                      </div>
+                    <div className="flex items-center gap-2 mb-3">
+                      {chunk.is_recorded_by_me ? (
+                        <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
+                      ) : (
+                        <Circle className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      )}
+                      <span className="font-semibold text-sm text-foreground whitespace-nowrap">
+                        Chunk #{chunk.order_index}
+                      </span>
                       {chunk.is_recorded_by_me && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => navigate(`/record/${bookId}`)}
-                        >
-                          Re-record
-                        </Button>
+                        <span className="px-2 py-0.5 bg-muted text-muted-foreground text-xs font-medium rounded-full whitespace-nowrap">
+                          Recorded
+                        </span>
+                      )}
+                      {chunk.estimated_duration && (
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                          {Math.round(chunk.estimated_duration)}s
+                        </span>
                       )}
                     </div>
 
                     {/* Text Content */}
-                    <div className="mb-4">
-                      <p className="text-lg leading-relaxed text-foreground">
+                    <div className="mb-3">
+                      <p className="text-sm leading-relaxed text-foreground">
                         {chunk.text}
                       </p>
                     </div>
 
-                    {/* Audio Player */}
-                    {chunk.is_recorded_by_me && audioUrls.has(chunk.id) && (
-                      <div className="mt-4 pt-4 border-t border-border">
-                        <div className="mb-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handlePlayPause(chunk.id)}
-                            className="mb-2"
-                          >
-                            {isPlaying.get(chunk.id) ? (
-                              <>
-                                <Pause className="h-4 w-4 mr-2" />
-                                Pause
-                              </>
-                            ) : (
-                              <>
-                                <Play className="h-4 w-4 mr-2" />
-                                Play
-                              </>
-                            )}
-                          </Button>
-                        </div>
-                        <Waveform
-                          audioUrl={audioUrls.get(chunk.id)!}
-                          isPlaying={isPlaying.get(chunk.id) || false}
-                          onPlayPause={() => handlePlayPause(chunk.id)}
-                          onSeek={handleSeek}
-                          height={80}
-                          waveColor="#10b981"
-                          progressColor="#059669"
-                          cursorColor="#047857"
-                        />
+                    {/* Audio Player - внизу на всю ширину */}
+                    {chunk.is_recorded_by_me && chunk.my_recording?.id && (
+                      <div className="mt-3 pt-3 border-t border-border">
+                        <audio
+                          controls
+                          src={`${API_BASE_URL}/recordings/${chunk.my_recording.id}/audio`}
+                          className="w-full h-8"
+                        >
+                          Your browser does not support the audio element.
+                        </audio>
                       </div>
                     )}
                   </CardContent>

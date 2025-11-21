@@ -53,3 +53,4 @@ class AdminStatisticsResponse(BaseModel):
     by_book: List[BookStatsItem] = []
     by_category: List[CategoryStatsItem] = []
 
+
