@@ -41,6 +41,34 @@ class StatisticsService:
             )
         return query
     
+    def _build_base_query(
+        self,
+        speaker_id: Optional[int] = None,
+        book_id: Optional[int] = None,
+        category_id: Optional[int] = None,
+        period: Optional[str] = None,
+        start_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None
+    ):
+        """Построить базовый запрос с применением всех фильтров для оптимизации"""
+        query = self.db.query(Recording)
+        
+        # Применяем фильтры по сущностям
+        if speaker_id:
+            query = query.filter(Recording.speaker_id == speaker_id)
+        
+        if book_id or category_id:
+            query = query.join(Chunk, Recording.chunk_id == Chunk.id)
+            if book_id:
+                query = query.filter(Chunk.book_id == book_id)
+            if category_id:
+                query = query.join(Book, Chunk.book_id == Book.id).filter(Book.category_id == category_id)
+        
+        # Применяем фильтр по дате
+        query = self._apply_date_filter(query, period, start_date, end_date)
+        
+        return query
+    
     def get_speaker_statistics(
         self,
         speaker_id: int,
@@ -155,27 +183,27 @@ class StatisticsService:
         category_id: Optional[int] = None
     ) -> AdminStatisticsResponse:
         """Получить статистику для админа (по всем пользователям)."""
-        # Базовый запрос
-        base_query = self.db.query(Recording)
+        # Используем оптимизированный базовый запрос
+        base_query = self._build_base_query(
+            speaker_id=speaker_id,
+            book_id=book_id,
+            category_id=category_id,
+            period=period,
+            start_date=start_date,
+            end_date=end_date
+        )
         
-        # Фильтр по спикеру
-        if speaker_id:
-            base_query = base_query.filter(Recording.speaker_id == speaker_id)
+        # Общая статистика - один запрос для всех метрик
+        stats_result = base_query.with_entities(
+            func.count(Recording.id).label('total_recordings'),
+            func.sum(Recording.duration).label('total_duration'),
+            func.count(func.distinct(Recording.speaker_id)).label('total_speakers')
+        ).first()
         
-        # Применяем фильтр по дате
-        base_query = self._apply_date_filter(base_query, period, start_date, end_date)
-        
-        # Общая статистика
-        total_recordings = base_query.count()
-        total_duration = base_query.with_entities(
-            func.sum(Recording.duration)
-        ).scalar() or 0.0
+        total_recordings = stats_result.total_recordings or 0
+        total_duration = stats_result.total_duration or 0.0
         total_duration_hours = total_duration / 3600.0
-        
-        # Количество уникальных спикеров
-        total_speakers = base_query.with_entities(
-            func.count(func.distinct(Recording.speaker_id))
-        ).scalar() or 0
+        total_speakers = stats_result.total_speakers or 0
         
         # Статистика по периодам (по дням)
         period_stats = []
@@ -198,7 +226,7 @@ class StatisticsService:
                     recordings_count=count
                 ))
         
-        # Статистика по спикерам
+        # Статистика по спикерам - используем оптимизированный запрос
         speaker_stats = []
         speaker_query = self.db.query(
             User.id,
@@ -209,6 +237,7 @@ class StatisticsService:
             Recording, User.id == Recording.speaker_id
         )
         
+        # Применяем те же фильтры, что и в базовом запросе
         if speaker_id:
             speaker_query = speaker_query.filter(Recording.speaker_id == speaker_id)
         if book_id:
@@ -216,9 +245,11 @@ class StatisticsService:
                 Chunk.book_id == book_id
             )
         if category_id:
-            speaker_query = speaker_query.join(Chunk, Recording.chunk_id == Chunk.id).join(
-                Book, Chunk.book_id == Book.id
-            ).filter(Book.category_id == category_id)
+            if not book_id:  # Если уже есть join с Chunk, не делаем повторный
+                speaker_query = speaker_query.join(Chunk, Recording.chunk_id == Chunk.id)
+            speaker_query = speaker_query.join(Book, Chunk.book_id == Book.id).filter(
+                Book.category_id == category_id
+            )
         
         speaker_query = self._apply_date_filter(speaker_query, period, start_date, end_date)
         speaker_results = speaker_query.group_by(User.id, User.username).all()
@@ -231,7 +262,7 @@ class StatisticsService:
                 recordings_count=count
             ))
         
-        # Статистика по книгам
+        # Статистика по книгам - оптимизированный запрос
         book_stats = []
         book_query = self.db.query(
             Book.id,
@@ -244,6 +275,7 @@ class StatisticsService:
             Recording, Chunk.id == Recording.chunk_id
         )
         
+        # Применяем фильтры
         if speaker_id:
             book_query = book_query.filter(Recording.speaker_id == speaker_id)
         if book_id:
@@ -262,7 +294,7 @@ class StatisticsService:
                 recordings_count=count
             ))
         
-        # Статистика по категориям
+        # Статистика по категориям - оптимизированный запрос
         category_stats = []
         category_query = self.db.query(
             Category.id,
@@ -277,6 +309,7 @@ class StatisticsService:
             Recording, Chunk.id == Recording.chunk_id
         )
         
+        # Применяем фильтры
         if speaker_id:
             category_query = category_query.filter(Recording.speaker_id == speaker_id)
         if book_id:

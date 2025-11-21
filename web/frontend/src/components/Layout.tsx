@@ -23,7 +23,8 @@ import {
   User,
   Settings,
   Menu,
-  ChevronRight
+  ChevronRight,
+  BarChart3
 } from "lucide-react";
 import { cn, getAvatarGradient } from "@/lib/utils";
 
@@ -52,10 +53,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { to: "/categories", label: "Categories", icon: FolderOpen },
     { to: "/books", label: "Books", icon: BookOpen },
     { to: "/assignments", label: "Assignments", icon: UserCheck },
+    { to: "/statistics", label: "Statistics", icon: BarChart3 },
   ];
 
   const speakerLinks = [
     { to: "/", label: "Китептер", icon: BookOpen },
+    { to: "/statistics", label: "Статистика", icon: BarChart3 },
   ];
 
   const links = isAdmin ? adminLinks : speakerLinks;
@@ -66,6 +69,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
       return location.pathname === "/" || 
              location.pathname.startsWith("/record/") || 
              location.pathname.startsWith("/speaker/books/");
+    }
+    // Statistics is active on exact path match
+    if (path === "/statistics") {
+      return location.pathname === "/statistics";
     }
     return location.pathname === path;
   };

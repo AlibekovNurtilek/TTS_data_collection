@@ -18,6 +18,8 @@ import Assignments from "./pages/Assignments";
 import SpeakerBooks from "./pages/SpeakerBooks";
 import SpeakerBookChunks from "./pages/SpeakerBookChunks";
 import RecordBook from "./pages/RecordBook";
+import AdminStatistics from "./pages/AdminStatistics";
+import SpeakerStatistics from "./pages/SpeakerStatistics";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,6 +37,20 @@ function RootRoute() {
   }
   
   // Fallback - should not happen, but just in case
+  return <Navigate to="/login" replace />;
+}
+
+function StatisticsRoute() {
+  const { user } = useAuth();
+  
+  if (user?.role === "admin") {
+    return <AdminStatistics />;
+  }
+  
+  if (user?.role === "speaker") {
+    return <SpeakerStatistics />;
+  }
+  
   return <Navigate to="/login" replace />;
 }
 
@@ -91,6 +107,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute allowedRoles={["admin"]}>
             <Assignments />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/statistics"
+        element={
+          <ProtectedRoute>
+            <StatisticsRoute />
           </ProtectedRoute>
         }
       />

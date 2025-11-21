@@ -7,10 +7,29 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { statisticsService, type AdminStatistics } from "@/services/statistics";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
-import { TrendingUp, Clock, Mic, BookOpen, FolderOpen, Users } from "lucide-react";
+import { usersService } from "@/services/users";
+import { booksService } from "@/services/books";
+import { categoriesService } from "@/services/categories";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, AreaChart, Area, ComposedChart } from "recharts";
+import { TrendingUp, Clock, Mic, BookOpen, FolderOpen, Users, X } from "lucide-react";
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
+
+interface User {
+  id: number;
+  username: string;
+  role: string;
+}
+
+interface Book {
+  id: number;
+  title: string;
+}
+
+interface Category {
+  id: number;
+  name: string;
+}
 
 export default function AdminStatistics() {
   const [statistics, setStatistics] = useState<AdminStatistics | null>(null);
@@ -18,11 +37,50 @@ export default function AdminStatistics() {
   const [period, setPeriod] = useState<"day" | "week" | "month" | "custom" | undefined>(undefined);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [selectedSpeakerId, setSelectedSpeakerId] = useState<number | undefined>(undefined);
+  const [selectedBookId, setSelectedBookId] = useState<number | undefined>(undefined);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | undefined>(undefined);
+  
+  // Filter options
+  const [speakers, setSpeakers] = useState<User[]>([]);
+  const [books, setBooks] = useState<Book[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loadingFilters, setLoadingFilters] = useState(true);
+  
   const { toast } = useToast();
 
   useEffect(() => {
+    loadFilterOptions();
+  }, []);
+
+  useEffect(() => {
     loadStatistics();
-  }, [period, startDate, endDate]);
+  }, [period, startDate, endDate, selectedSpeakerId, selectedBookId, selectedCategoryId]);
+
+  const loadFilterOptions = async () => {
+    try {
+      setLoadingFilters(true);
+      const [usersData, booksData, categoriesData] = await Promise.all([
+        usersService.getUsers(1, 1000),
+        booksService.getBooks(1, 1000),
+        categoriesService.getCategories(1, 1000),
+      ]);
+      
+      // Filter only speakers from users
+      const speakerUsers = usersData.items.filter(u => u.role === "speaker");
+      setSpeakers(speakerUsers);
+      setBooks(booksData.items);
+      setCategories(categoriesData.items);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load filter options",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingFilters(false);
+    }
+  };
 
   const loadStatistics = async () => {
     try {
@@ -30,7 +88,10 @@ export default function AdminStatistics() {
       const data = await statisticsService.getAdminStatistics(
         period,
         startDate || undefined,
-        endDate || undefined
+        endDate || undefined,
+        selectedSpeakerId,
+        selectedBookId,
+        selectedCategoryId
       );
       setStatistics(data);
     } catch (error) {
@@ -44,10 +105,37 @@ export default function AdminStatistics() {
     }
   };
 
+  const clearFilters = () => {
+    setPeriod(undefined);
+    setStartDate("");
+    setEndDate("");
+    setSelectedSpeakerId(undefined);
+    setSelectedBookId(undefined);
+    setSelectedCategoryId(undefined);
+  };
+
   const formatHours = (hours: number) => {
     const h = Math.floor(hours);
     const m = Math.floor((hours - h) * 60);
     return `${h}ч ${m}м`;
+  };
+
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-background border border-border rounded-lg shadow-lg p-3">
+          <p className="font-semibold mb-2">{label}</p>
+          {payload.map((entry: any, index: number) => (
+            <p key={index} className="text-sm" style={{ color: entry.color }}>
+              {entry.name}: {entry.name.includes("Hours") 
+                ? `${formatHours(entry.value)} (${entry.value.toFixed(2)}h)`
+                : entry.value}
+            </p>
+          ))}
+        </div>
+      );
+    }
+    return null;
   };
 
   if (loading) {
@@ -79,60 +167,142 @@ export default function AdminStatistics() {
           {/* Filters */}
           <Card className="mb-4 md:mb-6">
             <CardContent className="pt-4 md:pt-6">
-              <div className="flex flex-col sm:flex-row flex-wrap gap-3 md:gap-4 items-end">
-                <div className="flex-1 w-full sm:min-w-[200px]">
-                  <Label>Period</Label>
-                  <Select
-                    value={period || "all"}
-                    onValueChange={(value) => {
-                      if (value === "all") {
-                        setPeriod(undefined);
-                        setStartDate("");
-                        setEndDate("");
-                      } else {
-                        setPeriod(value as "day" | "week" | "month" | "custom");
-                        if (value !== "custom") {
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold">Filters</h3>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={clearFilters}
+                    className="flex items-center gap-2"
+                  >
+                    <X className="h-4 w-4" />
+                    Clear All
+                  </Button>
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
+                  <div className="flex-1 w-full">
+                    <Label>Period</Label>
+                    <Select
+                      value={period || "all"}
+                      onValueChange={(value) => {
+                        if (value === "all") {
+                          setPeriod(undefined);
                           setStartDate("");
                           setEndDate("");
+                        } else {
+                          setPeriod(value as "day" | "week" | "month" | "custom");
+                          if (value !== "custom") {
+                            setStartDate("");
+                            setEndDate("");
+                          }
                         }
-                      }
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Time</SelectItem>
-                      <SelectItem value="day">Today</SelectItem>
-                      <SelectItem value="week">Last Week</SelectItem>
-                      <SelectItem value="month">Last Month</SelectItem>
-                      <SelectItem value="custom">Custom Range</SelectItem>
-                    </SelectContent>
-                  </Select>
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Time</SelectItem>
+                        <SelectItem value="day">Today</SelectItem>
+                        <SelectItem value="week">Last Week</SelectItem>
+                        <SelectItem value="month">Last Month</SelectItem>
+                        <SelectItem value="custom">Custom Range</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {period === "custom" && (
+                    <>
+                      <div className="flex-1 w-full">
+                        <Label>Start Date</Label>
+                        <Input
+                          type="date"
+                          value={startDate}
+                          onChange={(e) => setStartDate(e.target.value)}
+                        />
+                      </div>
+                      <div className="flex-1 w-full">
+                        <Label>End Date</Label>
+                        <Input
+                          type="date"
+                          value={endDate}
+                          onChange={(e) => setEndDate(e.target.value)}
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  <div className="flex-1 w-full">
+                    <Label>Speaker</Label>
+                    <Select
+                      value={selectedSpeakerId?.toString() || "all"}
+                      onValueChange={(value) => {
+                        setSelectedSpeakerId(value === "all" ? undefined : parseInt(value));
+                      }}
+                      disabled={loadingFilters}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="All Speakers" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Speakers</SelectItem>
+                        {speakers.map((speaker) => (
+                          <SelectItem key={speaker.id} value={speaker.id.toString()}>
+                            {speaker.username}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="flex-1 w-full">
+                    <Label>Book</Label>
+                    <Select
+                      value={selectedBookId?.toString() || "all"}
+                      onValueChange={(value) => {
+                        setSelectedBookId(value === "all" ? undefined : parseInt(value));
+                      }}
+                      disabled={loadingFilters}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="All Books" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Books</SelectItem>
+                        {books.map((book) => (
+                          <SelectItem key={book.id} value={book.id.toString()}>
+                            {book.title}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="flex-1 w-full">
+                    <Label>Category</Label>
+                    <Select
+                      value={selectedCategoryId?.toString() || "all"}
+                      onValueChange={(value) => {
+                        setSelectedCategoryId(value === "all" ? undefined : parseInt(value));
+                      }}
+                      disabled={loadingFilters}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="All Categories" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Categories</SelectItem>
+                        {categories.map((category) => (
+                          <SelectItem key={category.id} value={category.id.toString()}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-
-                {period === "custom" && (
-                  <>
-                    <div className="flex-1 w-full sm:min-w-[200px]">
-                      <Label>Start Date</Label>
-                      <Input
-                        type="date"
-                        value={startDate}
-                        onChange={(e) => setStartDate(e.target.value)}
-                      />
-                    </div>
-                    <div className="flex-1 w-full sm:min-w-[200px]">
-                      <Label>End Date</Label>
-                      <Input
-                        type="date"
-                        value={endDate}
-                        onChange={(e) => setEndDate(e.target.value)}
-                      />
-                    </div>
-                  </>
-                )}
-
-                <Button onClick={loadStatistics} className="w-full sm:w-auto">Apply</Button>
               </div>
             </CardContent>
           </Card>
@@ -196,18 +366,33 @@ export default function AdminStatistics() {
             {statistics.by_period.length > 0 && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Duration by Day</CardTitle>
+                  <CardTitle>Activity by Day</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={statistics.by_period}>
+                    <ComposedChart data={statistics.by_period}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="date" />
-                      <YAxis />
-                      <Tooltip />
+                      <YAxis yAxisId="left" />
+                      <YAxis yAxisId="right" orientation="right" />
+                      <Tooltip content={<CustomTooltip />} />
                       <Legend />
-                      <Line type="monotone" dataKey="duration_hours" stroke="#8884d8" name="Hours" />
-                    </LineChart>
+                      <Area
+                        yAxisId="left"
+                        type="monotone"
+                        dataKey="duration_hours"
+                        fill="#8884d8"
+                        fillOpacity={0.3}
+                        stroke="#8884d8"
+                        name="Duration (hours)"
+                      />
+                      <Bar
+                        yAxisId="right"
+                        dataKey="recordings_count"
+                        fill="#82ca9d"
+                        name="Recordings"
+                      />
+                    </ComposedChart>
                   </ResponsiveContainer>
                 </CardContent>
               </Card>
@@ -217,18 +402,27 @@ export default function AdminStatistics() {
             {statistics.by_speaker.length > 0 && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Duration by Speaker</CardTitle>
+                  <CardTitle>Performance by Speaker</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={statistics.by_speaker}>
+                    <ComposedChart data={statistics.by_speaker}>
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="speaker_username" />
-                      <YAxis />
-                      <Tooltip />
+                      <XAxis dataKey="speaker_username" angle={-45} textAnchor="end" height={100} />
+                      <YAxis yAxisId="left" />
+                      <YAxis yAxisId="right" orientation="right" />
+                      <Tooltip content={<CustomTooltip />} />
                       <Legend />
-                      <Bar dataKey="duration_hours" fill="#8884d8" name="Hours" />
-                    </BarChart>
+                      <Bar yAxisId="left" dataKey="duration_hours" fill="#8884d8" name="Duration (hours)" />
+                      <Line
+                        yAxisId="right"
+                        type="monotone"
+                        dataKey="recordings_count"
+                        stroke="#82ca9d"
+                        strokeWidth={2}
+                        name="Recordings"
+                      />
+                    </ComposedChart>
                   </ResponsiveContainer>
                 </CardContent>
               </Card>
@@ -238,18 +432,27 @@ export default function AdminStatistics() {
             {statistics.by_book.length > 0 && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Duration by Book</CardTitle>
+                  <CardTitle>Progress by Book</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={statistics.by_book}>
+                    <ComposedChart data={statistics.by_book}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="book_title" angle={-45} textAnchor="end" height={100} />
-                      <YAxis />
-                      <Tooltip />
+                      <YAxis yAxisId="left" />
+                      <YAxis yAxisId="right" orientation="right" />
+                      <Tooltip content={<CustomTooltip />} />
                       <Legend />
-                      <Bar dataKey="duration_hours" fill="#8884d8" name="Hours" />
-                    </BarChart>
+                      <Bar yAxisId="left" dataKey="duration_hours" fill="#8884d8" name="Duration (hours)" />
+                      <Line
+                        yAxisId="right"
+                        type="monotone"
+                        dataKey="recordings_count"
+                        stroke="#82ca9d"
+                        strokeWidth={2}
+                        name="Recordings"
+                      />
+                    </ComposedChart>
                   </ResponsiveContainer>
                 </CardContent>
               </Card>

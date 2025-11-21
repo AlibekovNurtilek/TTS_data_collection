@@ -7,10 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { statisticsService, type SpeakerStatistics } from "@/services/statistics";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
-import { TrendingUp, Clock, Mic, BookOpen, FolderOpen } from "lucide-react";
-
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
+import { Clock, Mic, BookOpen, FolderOpen } from "lucide-react";
 
 export default function SpeakerStatistics() {
   const [statistics, setStatistics] = useState<SpeakerStatistics | null>(null);
@@ -35,8 +32,8 @@ export default function SpeakerStatistics() {
       setStatistics(data);
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to load statistics",
+        title: "Ката",
+        description: "Статистиканы жүктөөдө ката кетти",
         variant: "destructive",
       });
     } finally {
@@ -56,7 +53,7 @@ export default function SpeakerStatistics() {
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading statistics...</p>
+            <p className="text-muted-foreground">Статистика жүктөлүүдө...</p>
           </div>
         </div>
       </Layout>
@@ -72,8 +69,8 @@ export default function SpeakerStatistics() {
       <div className="min-h-full bg-gradient-to-b from-background to-muted/20 px-4 md:px-6 py-6 md:py-8">
         <div className="max-w-7xl mx-auto">
           <div className="mb-6 md:mb-8">
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">Statistics</h1>
-            <p className="text-sm md:text-base text-muted-foreground">Your recording statistics</p>
+            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">Статистика</h1>
+            <p className="text-sm md:text-base text-muted-foreground">Сиздин жазылган статистикаңыз</p>
           </div>
 
           {/* Filters */}
@@ -81,7 +78,7 @@ export default function SpeakerStatistics() {
             <CardContent className="pt-4 md:pt-6">
               <div className="flex flex-col sm:flex-row flex-wrap gap-3 md:gap-4 items-end">
                 <div className="flex-1 w-full sm:min-w-[200px]">
-                  <Label>Period</Label>
+                  <Label>Мөөнөт</Label>
                   <Select
                     value={period || "all"}
                     onValueChange={(value) => {
@@ -102,11 +99,11 @@ export default function SpeakerStatistics() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All Time</SelectItem>
-                      <SelectItem value="day">Today</SelectItem>
-                      <SelectItem value="week">Last Week</SelectItem>
-                      <SelectItem value="month">Last Month</SelectItem>
-                      <SelectItem value="custom">Custom Range</SelectItem>
+                      <SelectItem value="all">Бардык убакыт</SelectItem>
+                      <SelectItem value="day">Бүгүн</SelectItem>
+                      <SelectItem value="week">Акыркы жума</SelectItem>
+                      <SelectItem value="month">Акыркы ай</SelectItem>
+                      <SelectItem value="custom">Өзгөчө мөөнөт</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -114,7 +111,7 @@ export default function SpeakerStatistics() {
                 {period === "custom" && (
                   <>
                     <div className="flex-1 w-full sm:min-w-[200px]">
-                      <Label>Start Date</Label>
+                      <Label>Башталган күн</Label>
                       <Input
                         type="date"
                         value={startDate}
@@ -122,7 +119,7 @@ export default function SpeakerStatistics() {
                       />
                     </div>
                     <div className="flex-1 w-full sm:min-w-[200px]">
-                      <Label>End Date</Label>
+                      <Label>Аяктаган күн</Label>
                       <Input
                         type="date"
                         value={endDate}
@@ -132,185 +129,99 @@ export default function SpeakerStatistics() {
                   </>
                 )}
 
-                <Button onClick={loadStatistics} className="w-full sm:w-auto">Apply</Button>
+                <Button onClick={loadStatistics} className="w-full sm:w-auto">Көрсөтүү</Button>
               </div>
             </CardContent>
           </Card>
 
           {/* Summary Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 mb-6 md:mb-8">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Duration</CardTitle>
+                <CardTitle className="text-sm font-medium">Жалпы убакыт</CardTitle>
                 <Clock className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{formatHours(statistics.total_duration_hours)}</div>
+                <div className="text-3xl font-bold">{formatHours(statistics.total_duration_hours)}</div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {statistics.total_duration_hours.toFixed(2)} hours
+                  {statistics.total_duration_hours.toFixed(2)} саат
                 </p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Recordings</CardTitle>
+                <CardTitle className="text-sm font-medium">Жалпы жазылгандар</CardTitle>
                 <Mic className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{statistics.total_recordings}</div>
-                <p className="text-xs text-muted-foreground mt-1">recordings</p>
+                <div className="text-3xl font-bold">{statistics.total_recordings}</div>
+                <p className="text-xs text-muted-foreground mt-1">жазылган</p>
               </CardContent>
             </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Average Duration</CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {statistics.total_recordings > 0
-                    ? formatHours(statistics.total_duration_hours / statistics.total_recordings)
-                    : "0ч 0м"}
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">per recording</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Charts */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-6 md:mb-8">
-            {/* Duration by Period */}
-            {statistics.by_period.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Duration by Day</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={statistics.by_period}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Line type="monotone" dataKey="duration_hours" stroke="#8884d8" name="Hours" />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Duration by Book */}
-            {statistics.by_book.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Duration by Book</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={statistics.by_book}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="book_title" angle={-45} textAnchor="end" height={100} />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Bar dataKey="duration_hours" fill="#8884d8" name="Hours" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Duration by Category */}
-            {statistics.by_category.length > 0 && (
-              <Card className="lg:col-span-2">
-                <CardHeader>
-                  <CardTitle>Duration by Category</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie
-                        data={statistics.by_category}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={({ category_name, duration_hours }) => `${category_name}: ${duration_hours.toFixed(1)}h`}
-                        outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="duration_hours"
-                      >
-                        {statistics.by_category.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-            )}
           </div>
 
           {/* Tables */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
             {/* Books Table */}
-            {statistics.by_book.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <BookOpen className="h-5 w-5" />
-                    By Book
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BookOpen className="h-5 w-5" />
+                  Китептер боюнча
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {statistics.by_book.length > 0 ? (
+                  <div className="space-y-3">
                     {statistics.by_book.map((book) => (
-                      <div key={book.book_id} className="flex justify-between items-center p-3 border rounded-lg">
-                        <div>
-                          <p className="font-medium">{book.book_title}</p>
-                          <p className="text-sm text-muted-foreground">{book.recordings_count} recordings</p>
+                      <div key={book.book_id} className="flex justify-between items-center p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                        <div className="flex-1">
+                          <p className="font-semibold text-base mb-1">{book.book_title}</p>
+                          <p className="text-sm text-muted-foreground">{book.recordings_count} жазылган</p>
                         </div>
-                        <div className="text-right">
-                          <p className="font-semibold">{formatHours(book.duration_hours)}</p>
-                          <p className="text-sm text-muted-foreground">{book.duration_hours.toFixed(2)}h</p>
+                        <div className="text-right ml-4">
+                          <p className="font-bold text-lg text-primary">{formatHours(book.duration_hours)}</p>
+                          <p className="text-xs text-muted-foreground">{book.duration_hours.toFixed(2)} саат</p>
                         </div>
                       </div>
                     ))}
                   </div>
-                </CardContent>
-              </Card>
-            )}
+                ) : (
+                  <p className="text-center text-muted-foreground py-8">Китептер боюнча маалымат жок</p>
+                )}
+              </CardContent>
+            </Card>
 
             {/* Categories Table */}
-            {statistics.by_category.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <FolderOpen className="h-5 w-5" />
-                    By Category
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FolderOpen className="h-5 w-5" />
+                  Категориялар боюнча
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {statistics.by_category.length > 0 ? (
+                  <div className="space-y-3">
                     {statistics.by_category.map((category) => (
-                      <div key={category.category_id} className="flex justify-between items-center p-3 border rounded-lg">
-                        <div>
-                          <p className="font-medium">{category.category_name}</p>
-                          <p className="text-sm text-muted-foreground">{category.recordings_count} recordings</p>
+                      <div key={category.category_id} className="flex justify-between items-center p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                        <div className="flex-1">
+                          <p className="font-semibold text-base mb-1">{category.category_name}</p>
+                          <p className="text-sm text-muted-foreground">{category.recordings_count} жазылган</p>
                         </div>
-                        <div className="text-right">
-                          <p className="font-semibold">{formatHours(category.duration_hours)}</p>
-                          <p className="text-sm text-muted-foreground">{category.duration_hours.toFixed(2)}h</p>
+                        <div className="text-right ml-4">
+                          <p className="font-bold text-lg text-primary">{formatHours(category.duration_hours)}</p>
+                          <p className="text-xs text-muted-foreground">{category.duration_hours.toFixed(2)} саат</p>
                         </div>
                       </div>
                     ))}
                   </div>
-                </CardContent>
-              </Card>
-            )}
+                ) : (
+                  <p className="text-center text-muted-foreground py-8">Категориялар боюнча маалымат жок</p>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
