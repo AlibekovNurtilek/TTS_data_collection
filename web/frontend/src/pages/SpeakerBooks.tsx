@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { useAuth } from "@/contexts/AuthContext";
+import { useBook } from "@/contexts/BookContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,12 +31,15 @@ export default function SpeakerBooks() {
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { setCurrentBookTitle } = useBook();
 
   useEffect(() => {
     if (user) {
       loadInitialData();
     }
-  }, [user]);
+    // Clear book title when on main books page
+    setCurrentBookTitle(null);
+  }, [user, setCurrentBookTitle]);
 
   // Debounce для поиска
   useEffect(() => {

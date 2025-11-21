@@ -4,6 +4,7 @@ import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
+import { useBook } from "@/contexts/BookContext";
 import { speakersService } from "@/services/speakers";
 import { recordingsService } from "@/services/recordings";
 import { Waveform } from "@/components/Waveform";
@@ -43,13 +44,19 @@ export default function RecordBook() {
 
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { setCurrentBookTitle } = useBook();
 
   useEffect(() => {
     if (bookId) {
       loadBookData();
       loadNextChunk();
     }
-  }, [bookId]);
+    
+    // Cleanup: clear book title when leaving the page
+    return () => {
+      setCurrentBookTitle(null);
+    };
+  }, [bookId, setCurrentBookTitle]);
 
   // Update recording duration while recording
   useEffect(() => {
@@ -76,6 +83,10 @@ export default function RecordBook() {
     try {
       const bookData = await speakersService.getMyBook(parseInt(bookId!));
       setBook(bookData);
+      // Set book title in context for sidebar display
+      if (bookData?.title) {
+        setCurrentBookTitle(bookData.title);
+      }
     } catch (error) {
       toast({
         title: "Error",
@@ -242,17 +253,8 @@ export default function RecordBook() {
 
   return (
     <Layout>
-      <div className="min-h-full bg-gradient-to-b from-background to-muted/20 pb-32 md:pb-32">
-        <div className="px-4 md:px-6 py-6 md:py-8 max-w-8xl mx-auto">
-          {/* Header - компактное название книги */}
-          <div className="mb-8 md:mb-16">
-            <div className="inline-block px-4 md:px-6 py-2 md:py-3 bg-muted/60 border border-border/50 rounded-lg mx-auto">
-              <h1 className="text-sm md:text-lg font-medium text-muted-foreground tracking-wide text-center">
-                {book?.title}
-              </h1>
-            </div>
-          </div>
-
+      <div className="min-h-full bg-gradient-to-b from-background md:mt-10 to-muted/20 pb-32 md:pb-32">
+        <div className="px-4 md:px-6 py-6 md:py-8 md:mt-10 max-w-8xl mx-auto">
           {/* Text Content */}
           <div className="dark:bg-gradient-to-br dark:from-muted/50 dark:to-muted/30 p-4 md:p-8 rounded-xl mb-4">
             <p className="text-lg md:text-2xl leading-relaxed text-foreground font-normal tracking-wide text-center">

@@ -4,6 +4,7 @@ import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { useBook } from "@/contexts/BookContext";
 import {
   Select,
   SelectContent,
@@ -43,6 +44,7 @@ export default function SpeakerBookChunks() {
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { setCurrentBookTitle } = useBook();
 
   const loadBookData = async () => {
     if (!bookId) return;
@@ -50,6 +52,10 @@ export default function SpeakerBookChunks() {
     try {
       const bookData = await speakersService.getMyBook(parseInt(bookId));
       setBook(bookData);
+      // Set book title in context for sidebar display
+      if (bookData?.title) {
+        setCurrentBookTitle(bookData.title);
+      }
     } catch (error) {
       toast({
         title: "Error",
@@ -91,6 +97,11 @@ export default function SpeakerBookChunks() {
     if (bookId) {
       loadBookData();
     }
+    
+    // Cleanup: clear book title when leaving the page
+    return () => {
+      setCurrentBookTitle(null);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookId]);
 
@@ -157,25 +168,20 @@ export default function SpeakerBookChunks() {
   return (
     <Layout>
       <div className="min-h-full bg-gradient-to-b from-background to-muted/20 px-4 md:px-6 py-6 md:py-8">
-        {/* Header */}
-        <div className="mb-4 md:mb-6">
-          <div>
-            <h1 className="text-2xl md:text-4xl font-bold text-foreground mb-2 tracking-tight">
-              {book?.title || "Book Chunks"}
-            </h1>
-            {book && book.total_chunks > 0 && (
-              <div className="space-y-2">
-                <p className="text-sm md:text-base text-muted-foreground">
-                  Progress: {book.recorded_chunks} / {book.total_chunks} chunks recorded ({book.progress_percentage}%)
-                </p>
-                <Progress 
-                  value={book.progress_percentage || 0} 
-                  className="h-2 max-w-md"
-                />
-              </div>
-            )}
+        {/* Progress Section */}
+        {book && book.total_chunks > 0 && (
+          <div className="mb-4 md:mb-6">
+            <div className="space-y-2">
+              <p className="text-sm md:text-base text-muted-foreground">
+                Progress: {book.recorded_chunks} / {book.total_chunks} chunks recorded ({book.progress_percentage}%)
+              </p>
+              <Progress 
+                value={book.progress_percentage || 0} 
+                className="h-2 max-w-md"
+              />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Filters */}
         <div className="mb-4 md:mb-6 space-y-3 md:space-y-4">

@@ -1,8 +1,11 @@
 import { Link, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useBook } from "@/contexts/BookContext";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { CornerDownRight } from 'lucide-react';
+
 import {
   Sheet,
   SheetContent,
@@ -19,12 +22,14 @@ import {
   Sparkles,
   User,
   Settings,
-  Menu
+  Menu,
+  ChevronRight
 } from "lucide-react";
 import { cn, getAvatarGradient } from "@/lib/utils";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
+  const { currentBookTitle } = useBook();
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -56,10 +61,19 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const links = isAdmin ? adminLinks : speakerLinks;
 
   const isActive = (path: string) => {
+    // For speaker, "Китептер" is active on "/" and on book-related pages
     if (path === "/" && user?.role === "speaker") {
-      return location.pathname === "/" || !location.pathname.startsWith("/record");
+      return location.pathname === "/" || 
+             location.pathname.startsWith("/record/") || 
+             location.pathname.startsWith("/speaker/books/");
     }
     return location.pathname === path;
+  };
+
+  // Check if we're on a book-related page (record or chunks)
+  const isBookPageActive = () => {
+    if (user?.role !== "speaker") return false;
+    return location.pathname.startsWith("/record/") || location.pathname.startsWith("/speaker/books/");
   };
 
   const SidebarContent = ({ onLinkClick }: { onLinkClick?: () => void }) => (
@@ -97,42 +111,73 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {links.map((link) => {
           const Icon = link.icon;
           const active = isActive(link.to);
+          const isSpeakerBooksLink = !isAdmin && link.to === "/";
+          const showBookTitle = isSpeakerBooksLink && currentBookTitle;
+          
           return (
-            <Link
-              key={link.to}
-              to={link.to}
-              onClick={onLinkClick}
-              className={cn(
-                "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group relative overflow-hidden",
-                active
-                  ? "bg-white text-[#0066cc] dark:bg-[#a855f7] dark:text-white shadow-lg shadow-black/20 dark:shadow-[#a855f7]/30 transform scale-[1.02]"
-                  : "text-white/90 hover:bg-white/10 hover:text-white hover:shadow-md"
-              )}
-            >
-              {/* Active indicator */}
-              {active && (
-                <div className="absolute left-0 top-0 bottom-0 w-1 bg-white dark:bg-[#a855f7] rounded-r-full"></div>
-              )}
+            <div key={link.to} className="space-y-1">
+              <Link
+                to={link.to}
+                onClick={onLinkClick}
+                className={cn(
+                  "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group relative overflow-hidden",
+                  active
+                    ? "bg-white text-[#0066cc] dark:bg-[#a855f7] dark:text-white shadow-lg shadow-black/20 dark:shadow-[#a855f7]/30 transform scale-[1.02]"
+                    : "text-white/90 hover:bg-white/10 hover:text-white hover:shadow-md"
+                )}
+              >
+                {/* Active indicator */}
+                {active && (
+                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-white dark:bg-[#a855f7] rounded-r-full"></div>
+                )}
+                
+                {/* Hover effect */}
+                {!active && (
+                  <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/5 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                )}
+                
+                <Icon className={cn(
+                  "h-5 w-5 transition-all duration-300 relative z-10",
+                  active ? "text-[#0066cc] dark:text-white" : "group-hover:scale-110 group-hover:rotate-3"
+                )} />
+                <span className={cn(
+                  "font-semibold text-sm relative z-10",
+                  active ? "text-[#0066cc] dark:text-white" : ""
+                )}>{link.label}</span>
+                
+                {/* Sparkle effect on hover */}
+                {!active && (
+                  <Sparkles className="h-4 w-4 text-white/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ml-auto relative z-10" />
+                )}
+              </Link>
               
-              {/* Hover effect */}
-              {!active && (
-                <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/5 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              {/* Book title as child element */}
+              {showBookTitle && (
+                <div className="pl-11 ">
+                  <div className={cn(
+                    "flex items-center justify-start gap-2 pl-3 pr-3 py-1.5 rounded-md border transition-all duration-300",
+                    isBookPageActive()
+                      ? "bg-white text-[#0066cc] dark:bg-[#a855f7] dark:text-white shadow-lg shadow-black/20 dark:shadow-[#a855f7]/30 border-white/30 dark:border-white/20"
+                      : "bg-white/10 dark:bg-white/5 border-white/20 dark:border-white/10"
+                  )}>
+                    <CornerDownRight className={cn(
+                      "h-4 w-4 flex-shrink-0 ",
+                      isBookPageActive()
+                        ? "text-[#0066cc] dark:text-white"
+                        : "text-white/70 dark:text-white/60"
+                    )} />
+                    <p className={cn(
+                      "text-xs font-medium line-clamp-2 leading-tight flex-1",
+                      isBookPageActive()
+                        ? "text-[#0066cc] dark:text-white"
+                        : "text-white/90 dark:text-white/80"
+                    )}>
+                      {currentBookTitle}
+                    </p>
+                  </div>
+                </div>
               )}
-              
-              <Icon className={cn(
-                "h-5 w-5 transition-all duration-300 relative z-10",
-                active ? "text-[#0066cc] dark:text-white" : "group-hover:scale-110 group-hover:rotate-3"
-              )} />
-              <span className={cn(
-                "font-semibold text-sm relative z-10",
-                active ? "text-[#0066cc] dark:text-white" : ""
-              )}>{link.label}</span>
-              
-              {/* Sparkle effect on hover */}
-              {!active && (
-                <Sparkles className="h-4 w-4 text-white/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ml-auto relative z-10" />
-              )}
-            </Link>
+            </div>
           );
         })}
       </nav>
