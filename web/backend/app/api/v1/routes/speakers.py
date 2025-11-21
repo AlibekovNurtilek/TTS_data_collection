@@ -208,17 +208,22 @@ async def get_my_book_chunks(
 )
 async def get_next_chunk_for_recording(
     book_id: int,
+    chunk_id: Optional[int] = Query(default=None, description="ID чанка для перезаписи (опционально)"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """
-    Получить следующий не записанный чанк для записи (караоке режим).
-    Возвращает первый чанк с минимальным order_index, который еще не записан этим спикером.
+    Получить чанк для записи (караоке режим).
+    
+    - Если передан **chunk_id**: возвращает этот конкретный чанк (для перезаписи)
+    - Если **chunk_id** не передан: возвращает первый чанк с минимальным order_index, который еще не записан этим спикером
+    
     Доступно только для спикеров, которым назначена книга.
     
     - **book_id**: ID книги
+    - **chunk_id**: ID чанка для перезаписи (опционально)
     
-    Если все чанки записаны, возвращает 404.
+    Если все чанки записаны (и chunk_id не передан), возвращает 404.
     """
     # Проверяем, что пользователь является спикером
     if current_user.role != UserRole.SPEAKER:
@@ -234,16 +239,31 @@ async def get_next_chunk_for_recording(
     chunk_repo = ChunkRepository()
     recording_repo = RecordingRepository()
     
-    # Получаем следующий не записанный чанк
-    chunk = chunk_repo.get_next_unrecorded_chunk(db, book_id, current_user.id)
+    # Если передан chunk_id - получаем этот чанк
+    if chunk_id is not None:
+        chunk = chunk_repo.get_by_id(db, chunk_id)
+        if not chunk:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Chunk not found"
+            )
+        # Проверяем, что чанк принадлежит этой книге
+        if chunk.book_id != book_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Chunk does not belong to this book"
+            )
+    else:
+        # Получаем следующий не записанный чанк
+        chunk = chunk_repo.get_next_unrecorded_chunk(db, book_id, current_user.id)
+        
+        if not chunk:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="All chunks for this book have been recorded"
+            )
     
-    if not chunk:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="All chunks for this book have been recorded"
-        )
-    
-    # Проверяем наличие записи (на всякий случай, хотя метод уже фильтрует)
+    # Проверяем наличие записи
     recording = recording_repo.get_by_chunk_and_speaker(
         db,
         chunk.id,

@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { useAppSelector } from "@/store/hooks";
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -25,6 +26,10 @@ import type { SpeakerChunk, Book } from "@/types";
 
 export default function RecordBook() {
   const { bookId } = useParams<{ bookId: string }>();
+  const [searchParams] = useSearchParams();
+  const chunkIdParam = searchParams.get("chunk_id");
+  const isRerecording = chunkIdParam !== null;
+  
   const [book, setBook] = useState<Book | null>(null);
   const [chunk, setChunk] = useState<SpeakerChunk | null>(null);
   const [isRecording, setIsRecording] = useState(false);
@@ -45,6 +50,10 @@ export default function RecordBook() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { setCurrentBookTitle } = useBook();
+  
+  // Получаем сохраненное состояние для возврата на страницу списка
+  const PAGINATION_KEY = `speakerBookChunks-${bookId}`;
+  const savedState = useAppSelector((state) => state.pagination[PAGINATION_KEY]);
 
   useEffect(() => {
     if (bookId) {
@@ -56,7 +65,7 @@ export default function RecordBook() {
     return () => {
       setCurrentBookTitle(null);
     };
-  }, [bookId, setCurrentBookTitle]);
+  }, [bookId, chunkIdParam, setCurrentBookTitle]);
 
   // Update recording duration while recording
   useEffect(() => {
@@ -100,7 +109,8 @@ export default function RecordBook() {
     try {
       setLoading(true);
       setAllRecorded(false);
-      const nextChunk = await speakersService.getNextChunk(parseInt(bookId!));
+      const chunkId = chunkIdParam ? parseInt(chunkIdParam) : undefined;
+      const nextChunk = await speakersService.getNextChunk(parseInt(bookId!), chunkId);
       setChunk(nextChunk);
       clearRecording();
     } catch (error: any) {
@@ -110,7 +120,7 @@ export default function RecordBook() {
       } else {
         toast({
           title: "Error",
-          description: "Failed to load next chunk",
+          description: "Failed to load chunk",
           variant: "destructive",
         });
       }
@@ -180,13 +190,35 @@ export default function RecordBook() {
       const file = new File([audioBlob], `recording-${Date.now()}.wav`, { type: "audio/wav" });
       await recordingsService.uploadRecording(chunk.id, file);
 
-      toast({
-        title: "Success",
-        description: "Recording saved! Loading next chunk...",
-      });
-
-      // Автоматически загружаем следующий чанк
-      await loadNextChunk();
+      // Если это перезапись - возвращаем на страницу списка чанков с сохраненными параметрами
+      if (isRerecording) {
+        toast({
+          title: "Success",
+          description: "Recording updated successfully!",
+        });
+        
+        // Строим URL с сохраненными параметрами
+        const params = new URLSearchParams();
+        if (savedState?.pageNumber) {
+          params.set("page", savedState.pageNumber.toString());
+        }
+        if (savedState?.filter) {
+          params.set("filter", savedState.filter);
+        }
+        if (savedState?.search) {
+          params.set("search", savedState.search);
+        }
+        
+        const queryString = params.toString();
+        navigate(`/speaker/books/${bookId}/chunks${queryString ? `?${queryString}` : ""}`);
+      } else {
+        toast({
+          title: "Success",
+          description: "Recording saved! Loading next chunk...",
+        });
+        // Автоматически загружаем следующий чанк
+        await loadNextChunk();
+      }
     } catch (error) {
       toast({
         title: "Error",
@@ -359,7 +391,9 @@ export default function RecordBook() {
                   disabled={uploading}
                 >
                   <Save className="h-5 w-5" />
-                  <span className="hidden sm:inline">{uploading ? "Сакталууда..." : "Сактап, кийинкиге"}</span>
+                  <span className="hidden sm:inline">
+                    {uploading ? "Сакталууда..." : (isRerecording ? "Сактоо" : "Сактап, кийинкиге")}
+                  </span>
                   <span className="sm:hidden">{uploading ? "Сакталууда..." : "Сактоо"}</span>
                 </Button>
               </div>

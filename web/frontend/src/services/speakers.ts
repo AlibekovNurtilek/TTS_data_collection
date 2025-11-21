@@ -6,8 +6,11 @@ export const speakersService = {
     return api.get<BookWithStatistics>(`/speakers/me/books/${bookId}`);
   },
 
-  async getNextChunk(bookId: number): Promise<SpeakerChunk> {
-    return api.get<SpeakerChunk>(`/speakers/me/books/${bookId}/next-chunk`);
+  async getNextChunk(bookId: number, chunkId?: number): Promise<SpeakerChunk> {
+    const url = chunkId 
+      ? `/speakers/me/books/${bookId}/next-chunk?chunk_id=${chunkId}`
+      : `/speakers/me/books/${bookId}/next-chunk`;
+    return api.get<SpeakerChunk>(url);
   },
 
   async getMyBookChunks(

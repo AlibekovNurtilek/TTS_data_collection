@@ -16,25 +16,34 @@ import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { speakersService } from "@/services/speakers";
 import { API_BASE_URL } from "@/lib/api";
-import { ArrowLeft, Search, X, CheckCircle2, Circle } from "lucide-react";
+import { ArrowLeft, Search, X, CheckCircle2, Circle, RotateCcw } from "lucide-react";
 import type { SpeakerChunk, BookWithStatistics } from "@/types";
 import { Pagination } from "@/components/Pagination";
-import { useAppSelector } from "@/store/hooks";
+import { useAppSelector, useAppDispatch } from "@/store/hooks";
+import { setPageState } from "@/store/paginationSlice";
 
 const DEFAULT_LIMIT = 10;
 
 export default function SpeakerBookChunks() {
   const { bookId } = useParams<{ bookId: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
+  const dispatch = useAppDispatch();
   const PAGINATION_KEY = `speakerBookChunks-${bookId}`;
   const paginationState = useAppSelector((state) => state.pagination[PAGINATION_KEY]);
   
+  // Восстанавливаем состояние из Redux или используем URL параметры
   const pageNumber = paginationState?.pageNumber || parseInt(searchParams.get("page") || "1", 10);
   const limit = paginationState?.limit || DEFAULT_LIMIT;
-  const [searchInput, setSearchInput] = useState<string>(searchParams.get("search") || "");
-  const [searchQuery, setSearchQuery] = useState<string>(searchParams.get("search") || "");
+  const [searchInput, setSearchInput] = useState<string>(
+    paginationState?.search || searchParams.get("search") || ""
+  );
+  const [searchQuery, setSearchQuery] = useState<string>(
+    paginationState?.search || searchParams.get("search") || ""
+  );
   const [filter, setFilter] = useState<"all" | "recorded" | "not_recorded">(
-    (searchParams.get("filter") as "all" | "recorded" | "not_recorded") || "all"
+    (paginationState?.filter as "all" | "recorded" | "not_recorded") || 
+    (searchParams.get("filter") as "all" | "recorded" | "not_recorded") || 
+    "all"
   );
 
   const [book, setBook] = useState<BookWithStatistics | null>(null);
@@ -105,6 +114,34 @@ export default function SpeakerBookChunks() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookId]);
 
+  // Восстанавливаем URL параметры из Redux при первой загрузке (только если есть сохраненное состояние)
+  useEffect(() => {
+    if (bookId && paginationState && paginationState.pageNumber) {
+      const params = new URLSearchParams();
+      if (paginationState.pageNumber) {
+        params.set("page", paginationState.pageNumber.toString());
+      }
+      if (paginationState.filter) {
+        params.set("filter", paginationState.filter);
+      }
+      if (paginationState.search) {
+        params.set("search", paginationState.search);
+      }
+      
+      const currentParams = new URLSearchParams(searchParams);
+      const shouldUpdate = 
+        currentParams.get("page") !== params.get("page") ||
+        currentParams.get("filter") !== params.get("filter") ||
+        currentParams.get("search") !== params.get("search");
+      
+      // Восстанавливаем только если URL параметры пустые или отличаются от сохраненных
+      if (shouldUpdate) {
+        setSearchParams(params, { replace: true });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bookId]);
+
   // Загружаем чанки при изменении bookId или параметров
   useEffect(() => {
     if (bookId) {
@@ -112,6 +149,19 @@ export default function SpeakerBookChunks() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookId, pageNumber, limit, searchQuery, filter]);
+
+  // Сохраняем состояние в Redux при изменении
+  useEffect(() => {
+    if (bookId) {
+      dispatch(setPageState({
+        key: PAGINATION_KEY,
+        pageNumber,
+        limit,
+        filter,
+        search: searchQuery,
+      }));
+    }
+  }, [bookId, pageNumber, limit, filter, searchQuery, dispatch, PAGINATION_KEY]);
 
   // Debounce для поиска
   useEffect(() => {
@@ -133,13 +183,13 @@ export default function SpeakerBookChunks() {
 
 
   const handlePageChange = (newPageNumber: number) => {
-    setSearchParams({ page: newPageNumber.toString(), filter });
+    setSearchParams({ page: newPageNumber.toString(), filter, ...(searchQuery && { search: searchQuery }) });
   };
 
   const handleFilterChange = (value: string) => {
     const newFilter = value as "all" | "recorded" | "not_recorded";
     setFilter(newFilter);
-    setSearchParams({ page: "1", filter: newFilter });
+    setSearchParams({ page: "1", filter: newFilter, ...(searchQuery && { search: searchQuery }) });
   };
 
 
@@ -173,11 +223,11 @@ export default function SpeakerBookChunks() {
           <div className="mb-4 md:mb-6">
             <div className="space-y-2">
               <p className="text-sm md:text-base text-muted-foreground">
-                Progress: {book.recorded_chunks} / {book.total_chunks} chunks recorded ({book.progress_percentage}%)
+                Жалпы прогресс: {book.recorded_chunks} / {book.total_chunks} сүйлөм жаздырылды ({book.progress_percentage}%)
               </p>
               <Progress 
                 value={book.progress_percentage || 0} 
-                className="h-2 max-w-md"
+                className="h-2 w-full"
               />
             </div>
           </div>
@@ -235,25 +285,28 @@ export default function SpeakerBookChunks() {
                   className="studio-shadow-lg border-2 border-border"
                 >
                   <CardContent className="p-3 md:p-4">
-                    {/* Header with status */}
-                    <div className="flex flex-wrap items-center gap-2 mb-3">
-                      {chunk.is_recorded_by_me ? (
-                        <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
-                      ) : (
-                        <Circle className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                      )}
-                      <span className="font-semibold text-xs md:text-sm text-foreground whitespace-nowrap">
-                        Chunk #{chunk.order_index}
-                      </span>
-                      {chunk.is_recorded_by_me && (
-                        <span className="px-2 py-0.5 bg-muted text-muted-foreground text-xs font-medium rounded-full whitespace-nowrap">
-                          Recorded
+                    {/* Header with status and re-record button */}
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        {chunk.is_recorded_by_me ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
+                        ) : (
+                          <Circle className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                        )}
+                        <span className="font-semibold text-xs md:text-sm text-foreground whitespace-nowrap">
+                          {chunk.order_index}-сүйлөм
                         </span>
-                      )}
-                      {chunk.estimated_duration && (
-                        <span className="text-xs text-muted-foreground whitespace-nowrap">
-                          {Math.round(chunk.estimated_duration)}s
-                        </span>
+                      </div>
+                      {chunk.is_recorded_by_me && chunk.my_recording?.id && (
+                        <Button
+                          onClick={() => navigate(`/record/${bookId}?chunk_id=${chunk.id}`)}
+                          variant="outline"
+                          size="sm"
+                          className="gap-2 flex-shrink-0"
+                        >
+                          <RotateCcw className="h-3 w-3" />
+                          <span className="text-xs">Кайра жазуу</span>
+                        </Button>
                       )}
                     </div>
 
@@ -264,7 +317,7 @@ export default function SpeakerBookChunks() {
                       </p>
                     </div>
 
-                    {/* Audio Player - внизу на всю ширину */}
+                    {/* Audio Player */}
                     {chunk.is_recorded_by_me && chunk.my_recording?.id && (
                       <div className="mt-3 pt-3 border-t border-border">
                         <audio

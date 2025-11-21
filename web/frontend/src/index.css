@@ -206,8 +206,7 @@ wave:hover {
   }
 
   .dark .studio-shadow {
-    /* Неоновый фиолетовый оттенок для теней в темной теме */
-    box-shadow: 0 2px 8px rgba(168, 85, 247, 0.2), 0 1px 3px rgba(168, 85, 247, 0.25);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2);
   }
 
   .studio-shadow-lg {
@@ -215,8 +214,7 @@ wave:hover {
   }
 
   .dark .studio-shadow-lg {
-    /* Неоновый фиолетовый оттенок для больших теней в темной теме */
-    box-shadow: 0 10px 25px rgba(168, 85, 247, 0.25), 0 4px 10px rgba(168, 85, 247, 0.3);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4), 0 4px 10px rgba(0, 0, 0, 0.3);
   }
 
   /* Animation delays для сайдбара */
@@ -265,28 +263,28 @@ wave:hover {
     background-image: none !important;
   }
 
-  /* Неоновые фиолетовые тени для стандартных Tailwind классов в темной теме */
+  /* Нейтральные тени для стандартных Tailwind классов в темной теме */
   .dark .shadow-sm {
-    box-shadow: 0 1px 2px 0 rgba(168, 85, 247, 0.15), 0 1px 3px 0 rgba(168, 85, 247, 0.15) !important;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.3), 0 1px 3px 0 rgba(0, 0, 0, 0.2) !important;
   }
 
   .dark .shadow {
-    box-shadow: 0 1px 3px 0 rgba(168, 85, 247, 0.18), 0 1px 2px 0 rgba(168, 85, 247, 0.18) !important;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.35), 0 1px 2px 0 rgba(0, 0, 0, 0.25) !important;
   }
 
   .dark .shadow-md {
-    box-shadow: 0 4px 6px -1px rgba(168, 85, 247, 0.2), 0 2px 4px -1px rgba(168, 85, 247, 0.2) !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3) !important;
   }
 
   .dark .shadow-lg {
-    box-shadow: 0 10px 15px -3px rgba(168, 85, 247, 0.25), 0 4px 6px -2px rgba(168, 85, 247, 0.25) !important;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.45), 0 4px 6px -2px rgba(0, 0, 0, 0.35) !important;
   }
 
   .dark .shadow-xl {
-    box-shadow: 0 20px 25px -5px rgba(168, 85, 247, 0.3), 0 10px 10px -5px rgba(168, 85, 247, 0.3) !important;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4) !important;
   }
 
   .dark .shadow-2xl {
-    box-shadow: 0 25px 50px -12px rgba(168, 85, 247, 0.35) !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.55) !important;
   }
 }
