@@ -41,10 +41,12 @@ export default function SpeakerStatistics() {
     }
   };
 
-  const formatHours = (hours: number) => {
-    const h = Math.floor(hours);
-    const m = Math.floor((hours - h) * 60);
-    return `${h}ч ${m}м`;
+  const formatTime = (hours: number) => {
+    const totalSeconds = Math.floor(hours * 3600);
+    const h = Math.floor(totalSeconds / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
+    const s = totalSeconds % 60;
+    return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
   };
 
   if (loading) {
@@ -142,7 +144,7 @@ export default function SpeakerStatistics() {
                 <Clock className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold">{formatHours(statistics.total_duration_hours)}</div>
+                <div className="text-3xl font-bold">{formatTime(statistics.total_duration_hours)}</div>
                 <p className="text-xs text-muted-foreground mt-1">
                   {statistics.total_duration_hours.toFixed(2)} саат
                 </p>
@@ -181,7 +183,7 @@ export default function SpeakerStatistics() {
                           <p className="text-sm text-muted-foreground">{book.recordings_count} жазылган</p>
                         </div>
                         <div className="text-right ml-4">
-                          <p className="font-bold text-lg text-primary">{formatHours(book.duration_hours)}</p>
+                          <p className="font-bold text-lg text-primary">{formatTime(book.duration_hours)}</p>
                           <p className="text-xs text-muted-foreground">{book.duration_hours.toFixed(2)} саат</p>
                         </div>
                       </div>
@@ -211,7 +213,7 @@ export default function SpeakerStatistics() {
                           <p className="text-sm text-muted-foreground">{category.recordings_count} жазылган</p>
                         </div>
                         <div className="text-right ml-4">
-                          <p className="font-bold text-lg text-primary">{formatHours(category.duration_hours)}</p>
+                          <p className="font-bold text-lg text-primary">{formatTime(category.duration_hours)}</p>
                           <p className="text-xs text-muted-foreground">{category.duration_hours.toFixed(2)} саат</p>
                         </div>
                       </div>

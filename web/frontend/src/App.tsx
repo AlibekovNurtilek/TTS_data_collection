@@ -18,7 +18,6 @@ import Assignments from "./pages/Assignments";
 import SpeakerBooks from "./pages/SpeakerBooks";
 import SpeakerBookChunks from "./pages/SpeakerBookChunks";
 import RecordBook from "./pages/RecordBook";
-import AdminStatistics from "./pages/AdminStatistics";
 import SpeakerStatistics from "./pages/SpeakerStatistics";
 import NotFound from "./pages/NotFound";
 
@@ -43,12 +42,14 @@ function RootRoute() {
 function StatisticsRoute() {
   const { user } = useAuth();
   
-  if (user?.role === "admin") {
-    return <AdminStatistics />;
-  }
-  
+  // Only speakers can access statistics page
   if (user?.role === "speaker") {
     return <SpeakerStatistics />;
+  }
+  
+  // Admins should use Dashboard for statistics
+  if (user?.role === "admin") {
+    return <Navigate to="/" replace />;
   }
   
   return <Navigate to="/login" replace />;

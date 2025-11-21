@@ -53,7 +53,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { to: "/categories", label: "Categories", icon: FolderOpen },
     { to: "/books", label: "Books", icon: BookOpen },
     { to: "/assignments", label: "Assignments", icon: UserCheck },
-    { to: "/statistics", label: "Statistics", icon: BarChart3 },
   ];
 
   const speakerLinks = [

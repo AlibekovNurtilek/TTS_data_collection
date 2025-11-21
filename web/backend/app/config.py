@@ -83,8 +83,8 @@ class Settings(BaseSettings):
     @classmethod
     def validate_admin_password(cls, v):
         """Валидация пароля администратора"""
-        if not v or len(v) < 8:
-            raise ValueError("DEFAULT_ADMIN_PASSWORD должен быть не менее 8 символов")
+        if not v or len(v) < 3:
+            raise ValueError("DEFAULT_ADMIN_PASSWORD должен быть не менее 3 символов")
         return v
     
     class Config:
@@ -93,6 +93,8 @@ class Settings(BaseSettings):
         case_sensitive = True
         # Валидация при загрузке
         validate_assignment = True
+        # Разрешаем дополнительные переменные окружения (например, HOST, PORT для uvicorn)
+        extra = "ignore"
 
 
 # Создаем экземпляр настроек (валидация происходит автоматически)
