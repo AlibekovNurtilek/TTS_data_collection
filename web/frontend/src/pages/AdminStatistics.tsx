@@ -428,65 +428,7 @@ export default function AdminStatistics() {
               </Card>
             )}
 
-            {/* Duration by Book */}
-            {statistics.by_book.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Progress by Book</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <ComposedChart data={statistics.by_book}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="book_title" angle={-45} textAnchor="end" height={100} />
-                      <YAxis yAxisId="left" />
-                      <YAxis yAxisId="right" orientation="right" />
-                      <Tooltip content={<CustomTooltip />} />
-                      <Legend />
-                      <Bar yAxisId="left" dataKey="duration_hours" fill="#8884d8" name="Duration (hours)" />
-                      <Line
-                        yAxisId="right"
-                        type="monotone"
-                        dataKey="recordings_count"
-                        stroke="#82ca9d"
-                        strokeWidth={2}
-                        name="Recordings"
-                      />
-                    </ComposedChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Duration by Category */}
-            {statistics.by_category.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Duration by Category</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie
-                        data={statistics.by_category}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={({ category_name, duration_hours }) => `${category_name}: ${duration_hours.toFixed(1)}h`}
-                        outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="duration_hours"
-                      >
-                        {statistics.by_category.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-            )}
+          
           </div>
 
           {/* Tables */}
