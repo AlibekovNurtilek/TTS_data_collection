@@ -3,14 +3,30 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { chunksService } from "@/services/chunks";
 import { booksService } from "@/services/books";
-import { ArrowLeft, Circle, Search, X } from "lucide-react";
-import type { Chunk, Book } from "@/types";
+import { assignmentsService } from "@/services/assignments";
+import { ArrowLeft, Circle, Search, X, CheckCircle2, User } from "lucide-react";
+import type { Chunk, Book, SpeakerChunk, BookWithSpeakers, SpeakerInfo } from "@/types";
 import { Pagination } from "@/components/Pagination";
 import { useAppSelector } from "@/store/hooks";
 import { Input } from "@/components/ui/input";
+import { API_BASE_URL } from "@/lib/api";
+import { cn, getAvatarGradient } from "@/lib/utils";
 
 const DEFAULT_LIMIT = 20;
 
@@ -26,9 +42,18 @@ export default function BookChunks() {
   const [searchQuery, setSearchQuery] = useState<string>(searchParams.get("search") || "");
 
   const [book, setBook] = useState<Book | null>(null);
+  const [bookWithSpeakers, setBookWithSpeakers] = useState<BookWithSpeakers | null>(null);
   const [chunks, setChunks] = useState<Chunk[]>([]);
+  const [speakerChunks, setSpeakerChunks] = useState<SpeakerChunk[]>([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
+  const [selectedSpeakerId, setSelectedSpeakerId] = useState<number | null>(
+    searchParams.get("speaker_id") ? parseInt(searchParams.get("speaker_id")!) : null
+  );
+  const [filter, setFilter] = useState<"all" | "recorded" | "not_recorded">(
+    (searchParams.get("filter") as "all" | "recorded" | "not_recorded") || "all"
+  );
+  const [showSpeakerDialog, setShowSpeakerDialog] = useState(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -36,8 +61,23 @@ export default function BookChunks() {
   useEffect(() => {
     if (bookId) {
       loadBookData();
+      loadBookSpeakers();
     }
   }, [bookId]);
+
+  // Проверяем, нужно ли показывать диалог выбора спикера
+  useEffect(() => {
+    if (bookWithSpeakers && bookWithSpeakers.assigned_speakers.length >= 2) {
+      // Если спикер не выбран, показываем диалог
+      if (!selectedSpeakerId) {
+        setShowSpeakerDialog(true);
+      }
+    } else {
+      // Если спикеров меньше 2, не показываем диалог и сбрасываем выбранного спикера
+      setSelectedSpeakerId(null);
+      setShowSpeakerDialog(false);
+    }
+  }, [bookWithSpeakers, selectedSpeakerId]);
 
   // Debounce для поиска
   useEffect(() => {
@@ -47,7 +87,11 @@ export default function BookChunks() {
 
     searchTimeoutRef.current = setTimeout(() => {
       setSearchQuery(searchInput);
-      setSearchParams({ page: "1" });
+      const params: Record<string, string> = { page: "1" };
+      if (selectedSpeakerId) {
+        params.speaker_id = selectedSpeakerId.toString();
+      }
+      setSearchParams(params);
     }, 500); // Задержка 500ms
 
     return () => {
@@ -55,13 +99,17 @@ export default function BookChunks() {
         clearTimeout(searchTimeoutRef.current);
       }
     };
-  }, [searchInput]);
+  }, [searchInput, selectedSpeakerId, setSearchParams]);
 
   useEffect(() => {
     if (bookId) {
-      loadChunks();
+      if (selectedSpeakerId && bookWithSpeakers && bookWithSpeakers.assigned_speakers.length >= 2) {
+        loadSpeakerChunks();
+      } else {
+        loadChunks();
+      }
     }
-  }, [bookId, pageNumber, limit, searchQuery]);
+  }, [bookId, pageNumber, limit, searchQuery, selectedSpeakerId, filter]);
 
   const loadBookData = async () => {
     try {
@@ -71,6 +119,19 @@ export default function BookChunks() {
       toast({
         title: "Error",
         description: "Failed to load book",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const loadBookSpeakers = async () => {
+    try {
+      const bookSpeakersData = await assignmentsService.getBookSpeakers(parseInt(bookId!));
+      setBookWithSpeakers(bookSpeakersData);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load book speakers",
         variant: "destructive",
       });
     }
@@ -86,6 +147,7 @@ export default function BookChunks() {
         searchQuery || undefined
       );
       setChunks(response.items);
+      setSpeakerChunks([]);
       setTotal(response.total);
     } catch (error) {
       toast({
@@ -98,8 +160,42 @@ export default function BookChunks() {
     }
   };
 
+  const loadSpeakerChunks = async () => {
+    if (!selectedSpeakerId) return;
+    
+    try {
+      setLoading(true);
+      const response = await chunksService.getBookChunksWithRecordings(
+        parseInt(bookId!),
+        selectedSpeakerId,
+        pageNumber,
+        limit,
+        searchQuery || undefined,
+        filter
+      );
+      setSpeakerChunks(response.items);
+      setChunks([]);
+      setTotal(response.total);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load chunks with recordings",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handlePageChange = (newPageNumber: number) => {
-    setSearchParams({ page: newPageNumber.toString() });
+    const params: Record<string, string> = { page: newPageNumber.toString() };
+    if (selectedSpeakerId) {
+      params.speaker_id = selectedSpeakerId.toString();
+    }
+    if (filter !== "all") {
+      params.filter = filter;
+    }
+    setSearchParams(params);
   };
 
   const handleSearch = (value: string) => {
@@ -109,7 +205,40 @@ export default function BookChunks() {
   const clearSearch = () => {
     setSearchInput("");
     setSearchQuery("");
-    setSearchParams({ page: "1" });
+    const params: Record<string, string> = { page: "1" };
+    if (selectedSpeakerId) {
+      params.speaker_id = selectedSpeakerId.toString();
+    }
+    if (filter !== "all") {
+      params.filter = filter;
+    }
+    setSearchParams(params);
+  };
+
+  const handleFilterChange = (value: string) => {
+    const newFilter = value as "all" | "recorded" | "not_recorded";
+    setFilter(newFilter);
+    const params: Record<string, string> = { page: "1" };
+    if (selectedSpeakerId) {
+      params.speaker_id = selectedSpeakerId.toString();
+    }
+    if (newFilter !== "all") {
+      params.filter = newFilter;
+    }
+    if (searchQuery) {
+      params.search = searchQuery;
+    }
+    setSearchParams(params);
+  };
+
+  const handleSpeakerSelect = (speakerId: number) => {
+    setSelectedSpeakerId(speakerId);
+    setShowSpeakerDialog(false);
+    setSearchParams({ page: "1", speaker_id: speakerId.toString() });
+  };
+
+  const handleChangeSpeaker = () => {
+    setShowSpeakerDialog(true);
   };
 
   if (loading) {
@@ -125,71 +254,134 @@ export default function BookChunks() {
     );
   }
 
+  const selectedSpeaker = bookWithSpeakers?.assigned_speakers.find(
+    (s) => s.id === selectedSpeakerId
+  );
+
   return (
     <Layout>
       <div className="p-4 md:p-8">
-        <Button variant="outline" onClick={() => navigate("/books")} className="mb-4 md:mb-6 gap-2">
-          <ArrowLeft className="h-4 w-4" />
-          Back to Books
-        </Button>
 
         <div className="mb-6 md:mb-8">
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">{book?.title}</h1>
-          <p className="text-sm md:text-base text-muted-foreground">
-            Total chunks: {total} | Showing: {chunks.length} on this page
-          </p>
+          <div className="flex items-start justify-between gap-4 mb-2">
+            <div className="flex-1">
+              <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">{book?.title}</h1>
+            </div>
+            {selectedSpeakerId && bookWithSpeakers && bookWithSpeakers.assigned_speakers.length >= 2 && (
+              <Button variant="outline" onClick={handleChangeSpeaker} className="gap-2">
+                <User className="h-4 w-4" />
+                Change Speaker
+              </Button>
+            )}
+          </div>
+          {selectedSpeaker && (
+            <div className="flex items-center gap-2 mt-2">
+              <div className={cn(
+                "w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-semibold bg-gradient-to-br flex-shrink-0",
+                getAvatarGradient(selectedSpeaker.username)
+              )}>
+                {selectedSpeaker.username.charAt(0).toUpperCase()}
+              </div>
+              <span className="text-sm text-muted-foreground">
+                Viewing recordings by: <span className="font-semibold text-foreground">{selectedSpeaker.username}</span>
+              </span>
+            </div>
+          )}
         </div>
 
-        {/* Search */}
+        {/* Search and Filter */}
         <div className="mb-4 md:mb-6">
-          <div className="relative w-full max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search chunks by text..."
-              value={searchInput}
-              onChange={(e) => handleSearch(e.target.value)}
-              className="pl-10 pr-10 h-11"
-            />
-            {searchInput && (
-              <button
-                onClick={clearSearch}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                <X className="h-4 w-4" />
-              </button>
+          <div className="flex flex-col md:flex-row gap-3 md:gap-4 items-start md:items-center">
+            <div className="relative w-full md:max-w-md flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search chunks by text..."
+                value={searchInput}
+                onChange={(e) => handleSearch(e.target.value)}
+                className="pl-10 pr-10 h-11"
+              />
+              {searchInput && (
+                <button
+                  onClick={clearSearch}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+            {selectedSpeakerId && bookWithSpeakers && bookWithSpeakers.assigned_speakers.length >= 2 && (
+              <Select value={filter} onValueChange={handleFilterChange}>
+                <SelectTrigger className="w-full md:w-[200px] h-11">
+                  <SelectValue placeholder="Filter" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Chunks</SelectItem>
+                  <SelectItem value="recorded">Recorded</SelectItem>
+                  <SelectItem value="not_recorded">Not Recorded</SelectItem>
+                </SelectContent>
+              </Select>
             )}
           </div>
         </div>
 
         <div className="space-y-3 md:space-y-4">
-          {chunks.map((chunk) => (
-            <Card key={chunk.id}>
-              <CardContent className="p-4 md:p-6">
-                <div className="flex items-start gap-3 md:gap-4">
-                  <Circle className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground flex-shrink-0 mt-1" />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-2">
-                      <span className="text-xs font-mono bg-muted px-2 py-1 rounded">
-                        #{chunk.order_index}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        ID: {chunk.id}
-                      </span>
-                      {chunk.estimated_duration && (
-                        <span className="text-xs text-muted-foreground">
-                          ~{chunk.estimated_duration}s
+          {selectedSpeakerId && speakerChunks.length > 0 ? (
+            // Показываем чанки с записями спикера
+            speakerChunks.map((chunk) => (
+              <Card key={chunk.id}>
+                <CardContent className="p-4 md:p-6">
+                  <div className="flex items-start gap-3 md:gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-2">
+                        {chunk.is_recorded_by_me ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
+                        ) : (
+                          <Circle className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                        )}
+                        <span className="text-xs font-mono bg-muted px-2 py-1 rounded">
+                          #{chunk.order_index}
                         </span>
+                      </div>
+                      <p className="text-sm md:text-base text-foreground leading-relaxed mb-3">{chunk.text}</p>
+                      {/* Audio Player */}
+                      {chunk.is_recorded_by_me && chunk.my_recording?.id && (
+                        <div className="mt-3 pt-3 border-t border-border">
+                          <audio
+                            controls
+                            src={`${API_BASE_URL}/recordings/${chunk.my_recording.id}/audio`}
+                            className="w-full h-8"
+                          >
+                            Your browser does not support the audio element.
+                          </audio>
+                        </div>
                       )}
                     </div>
-                    <p className="text-sm md:text-base text-foreground leading-relaxed">{chunk.text}</p>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            // Показываем обычные чанки без записей
+            chunks.map((chunk) => (
+              <Card key={chunk.id}>
+                <CardContent className="p-4 md:p-6">
+                  <div className="flex items-start gap-3 md:gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-2">
+                        <span className="text-xs font-mono bg-muted px-2 py-1 rounded">
+                          #{chunk.order_index}
+                        </span>
+                      </div>
+                      <p className="text-sm md:text-base text-foreground leading-relaxed">{chunk.text}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
         </div>
 
-        {chunks.length > 0 && (
+        {(chunks.length > 0 || speakerChunks.length > 0) && (
           <div className="mt-6">
             <Pagination
               paginationKey={PAGINATION_KEY}
@@ -200,6 +392,54 @@ export default function BookChunks() {
             />
           </div>
         )}
+
+        {/* Dialog для выбора спикера */}
+        <Dialog 
+          open={showSpeakerDialog} 
+          onOpenChange={(open) => {
+            // Не позволяем закрыть диалог без выбора спикера, если спикеров >= 2
+            if (!open && bookWithSpeakers && bookWithSpeakers.assigned_speakers.length >= 2 && !selectedSpeakerId) {
+              return;
+            }
+            setShowSpeakerDialog(open);
+          }}
+        >
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-bold">Select Speaker</DialogTitle>
+              <p className="text-sm text-muted-foreground mt-1">
+                This book has multiple speakers. Please select a speaker to view their recordings.
+              </p>
+            </DialogHeader>
+            <div className="space-y-2 mt-4">
+              {bookWithSpeakers?.assigned_speakers.map((speaker) => (
+                <Button
+                  key={speaker.id}
+                  variant={selectedSpeakerId === speaker.id ? "default" : "outline"}
+                  className="w-full justify-start gap-3 h-auto py-3"
+                  onClick={() => handleSpeakerSelect(speaker.id)}
+                >
+                  <div className={cn(
+                    "w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-semibold bg-gradient-to-br flex-shrink-0",
+                    getAvatarGradient(speaker.username)
+                  )}>
+                    {speaker.username.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="font-medium">{speaker.username}</span>
+                </Button>
+              ))}
+            </div>
+            <div className="mt-4 pt-4 border-t">
+              <Button
+                variant="ghost"
+                className="w-full"
+                onClick={() => navigate("/books")}
+              >
+                Back to Books
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </Layout>
   );

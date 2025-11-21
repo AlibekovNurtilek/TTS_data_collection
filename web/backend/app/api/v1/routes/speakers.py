@@ -126,18 +126,19 @@ async def get_my_book_chunks(
     chunk_service = ChunkService(db)
     recording_repo = RecordingRepository()
     
-    # Получаем все чанки книги
-    chunks, total_count = chunk_service.get_chunks_by_book(
+    # ШАГ 1: Получаем ВСЕ чанки книги (без пагинации, но с поиском)
+    # Используем большой лимит для получения всех чанков
+    all_chunks, _ = chunk_service.get_chunks_by_book(
         book_id,
-        page_number=pageNumber,
-        limit=limit,
+        page_number=1,
+        limit=100000,  # Большой лимит для получения всех чанков
         search=search
     )
     
-    # Для каждого чанка проверяем, есть ли запись от текущего спикера
-    speaker_chunks = []
-    for chunk in chunks:
-        # Проверяем наличие записи от этого спикера
+    # ШАГ 2: Фильтруем чанки по статусу записи
+    filtered_chunks = []
+    for chunk in all_chunks:
+        # Проверяем наличие записи от текущего спикера
         recording = recording_repo.get_by_chunk_and_speaker(
             db,
             chunk.id,
@@ -152,8 +153,18 @@ async def get_my_book_chunks(
         if filter == "not_recorded" and is_recorded:
             continue
         
-        # Формируем ответ
-        from app.schemas.recording import RecordingResponse
+        # Сохраняем чанк с информацией о записи
+        filtered_chunks.append((chunk, recording, is_recorded))
+    
+    # ШАГ 3: Применяем пагинацию к отфильтрованным результатам
+    total_count = len(filtered_chunks)
+    skip = (pageNumber - 1) * limit
+    paginated_chunks = filtered_chunks[skip:skip + limit]
+    
+    # Формируем ответ
+    from app.schemas.recording import RecordingResponse
+    speaker_chunks = []
+    for chunk, recording, is_recorded in paginated_chunks:
         speaker_chunk = SpeakerChunkResponse(
             id=chunk.id,
             book_id=chunk.book_id,
@@ -166,32 +177,6 @@ async def get_my_book_chunks(
             my_recording=RecordingResponse.model_validate(recording) if recording else None
         )
         speaker_chunks.append(speaker_chunk)
-    
-    # Если применен фильтр, нужно пересчитать total
-    if filter != "all":
-        # Получаем все чанки без пагинации для подсчета
-        all_chunks, _ = chunk_service.get_chunks_by_book(
-            book_id,
-            page_number=1,
-            limit=10000,  # Большой лимит для получения всех
-            search=search
-        )
-        
-        filtered_count = 0
-        for chunk in all_chunks:
-            recording = recording_repo.get_by_chunk_and_speaker(
-                db,
-                chunk.id,
-                current_user.id
-            )
-            is_recorded = recording is not None
-            
-            if filter == "recorded" and is_recorded:
-                filtered_count += 1
-            elif filter == "not_recorded" and not is_recorded:
-                filtered_count += 1
-        
-        total_count = filtered_count
     
     return SpeakerChunksPaginatedResponse(
         items=speaker_chunks,
