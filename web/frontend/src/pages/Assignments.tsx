@@ -50,7 +50,7 @@ const DEFAULT_LIMIT = 20;
 export default function Assignments() {
   const [searchParams, setSearchParams] = useSearchParams();
   const paginationState = useAppSelector((state) => state.pagination[PAGINATION_KEY]);
-  
+
   const pageNumber = paginationState?.pageNumber || parseInt(searchParams.get("page") || "1", 10);
   const limit = paginationState?.limit || DEFAULT_LIMIT;
 
@@ -186,7 +186,7 @@ export default function Assignments() {
       <div className="p-4 md:p-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 md:mb-8">
           <div className="flex items-center gap-3 md:gap-4">
-            <div className="p-2 md:p-3 bg-gradient-to-br from-[#0066cc] to-[#0052a3] rounded-xl shadow-lg">
+            <div className="p-2 md:p-3 bg-gradient-to-br from-[#0066cc] to-[#0052a3] dark:from-[#7c3aed] dark:to-[#6d28d9] rounded-xl shadow-lg">
               <UserCheck className="h-5 w-5 md:h-6 md:w-6 text-white" />
             </div>
             <div>
@@ -204,7 +204,7 @@ export default function Assignments() {
             }}
           >
             <DialogTrigger asChild>
-              <Button className="gap-2 bg-gradient-to-r from-[#0066cc] to-[#0052a3] hover:from-[#0052a3] hover:to-[#004999] text-white shadow-md hover:shadow-lg transition-all font-semibold w-full sm:w-auto">
+              <Button className="gap-2 bg-gradient-to-r from-[#0066cc] to-[#0052a3] hover:from-[#0052a3] hover:to-[#004999] dark:from-[#7c3aed] dark:to-[#6d28d9] dark:hover:from-[#6d28d9] dark:hover:to-[#5b21b6] text-white shadow-md hover:shadow-lg transition-all font-semibold w-full sm:w-auto">
                 <Plus className="h-4 w-4" />
                 <span className="hidden sm:inline">New Assignment</span>
                 <span className="sm:hidden">New</span>

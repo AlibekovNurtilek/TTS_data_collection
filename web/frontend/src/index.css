@@ -155,7 +155,7 @@ wave:hover {
   *,
   *::before,
   *::after {
-    transition-property: opacity, box-shadow, transform;
+    transition-property: opacity, box-shadow;
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     transition-duration: 0.2s;
   }

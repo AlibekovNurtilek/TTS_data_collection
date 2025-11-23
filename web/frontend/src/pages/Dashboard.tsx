@@ -45,13 +45,13 @@ export default function Dashboard() {
   const [selectedSpeakerId, setSelectedSpeakerId] = useState<number | undefined>(undefined);
   const [selectedBookId, setSelectedBookId] = useState<number | undefined>(undefined);
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | undefined>(undefined);
-  
+
   // Filter options
   const [speakers, setSpeakers] = useState<User[]>([]);
   const [books, setBooks] = useState<Book[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingFilters, setLoadingFilters] = useState(true);
-  
+
   const { toast } = useToast();
 
   useEffect(() => {
@@ -89,7 +89,7 @@ export default function Dashboard() {
         booksService.getBooks(1, 1000),
         categoriesService.getCategories(1, 1000),
       ]);
-      
+
       // Filter only speakers from users
       const speakerUsers = usersData.items.filter(u => u.role === "speaker");
       setSpeakers(speakerUsers);
@@ -175,7 +175,7 @@ export default function Dashboard() {
             <p className="text-muted-foreground text-base md:text-lg">Overview of your TTS studio</p>
           </div>
 
-        
+
 
           {/* Statistics Section */}
           {loading ? (
@@ -193,9 +193,9 @@ export default function Dashboard() {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <h3 className="text-lg font-semibold">Statistics Filters</h3>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
+                      <Button
+                        variant="outline"
+                        size="sm"
                         onClick={clearFilters}
                         className="flex items-center gap-2"
                       >
@@ -203,7 +203,7 @@ export default function Dashboard() {
                         Clear All
                       </Button>
                     </div>
-                    
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
                       <div className="flex-1 w-full">
                         <Label>Period</Label>
@@ -412,7 +412,7 @@ export default function Dashboard() {
                           <Bar
                             yAxisId="right"
                             dataKey="recordings_count"
-                            fill="#82ca9d"
+                            fill="#058a38ff"
                             name="Recordings"
                           />
                         </ComposedChart>

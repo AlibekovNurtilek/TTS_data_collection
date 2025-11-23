@@ -42,7 +42,7 @@ const DEFAULT_LIMIT = 20;
 export default function Users() {
   const [searchParams, setSearchParams] = useSearchParams();
   const paginationState = useAppSelector((state) => state.pagination[PAGINATION_KEY]);
-  
+
   const pageNumber = paginationState?.pageNumber || parseInt(searchParams.get("page") || "1", 10);
   const limit = paginationState?.limit || DEFAULT_LIMIT;
 
@@ -146,7 +146,7 @@ export default function Users() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 md:mb-8">
           <div className="flex items-center gap-3 md:gap-4">
-            <div className="p-2 md:p-3 bg-gradient-to-br from-[#0066cc] to-[#0052a3] rounded-xl shadow-lg">
+            <div className="p-2 md:p-3 bg-gradient-to-br from-[#0066cc] to-[#0052a3] dark:from-[#7c3aed] dark:to-[#6d28d9] rounded-xl shadow-lg">
               <UsersIcon className="h-5 w-5 md:h-6 md:w-6 text-white" />
             </div>
             <div>
@@ -156,7 +156,7 @@ export default function Users() {
           </div>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="gap-2 bg-gradient-to-r from-[#0066cc] to-[#0052a3] hover:from-[#0052a3] hover:to-[#004999] text-white shadow-md hover:shadow-lg transition-all w-full sm:w-auto">
+              <Button className="gap-2 bg-gradient-to-r from-[#0066cc] to-[#0052a3] hover:from-[#0052a3] hover:to-[#004999] dark:from-[#7c3aed] dark:to-[#6d28d9] dark:hover:from-[#6d28d9] dark:hover:to-[#5b21b6] text-white shadow-md hover:shadow-lg transition-all w-full sm:w-auto">
                 <Plus className="h-4 w-4" />
                 <span className="hidden sm:inline">Add New User</span>
                 <span className="sm:hidden">Add User</span>
@@ -191,9 +191,9 @@ export default function Users() {
                     placeholder="Enter password"
                   />
                 </div>
-                <Button 
-                  type="submit" 
-                  className="w-full h-11 bg-gradient-to-r from-[#0066cc] to-[#0052a3] hover:from-[#0052a3] hover:to-[#004999] text-white"
+                <Button
+                  type="submit"
+                  className="w-full h-11 bg-gradient-to-r from-[#0066cc] to-[#0052a3] hover:from-[#0052a3] hover:to-[#004999] dark:from-[#7c3aed] dark:to-[#6d28d9] dark:hover:from-[#6d28d9] dark:hover:to-[#5b21b6] text-white"
                 >
                   Create User
                 </Button>
@@ -281,14 +281,14 @@ export default function Users() {
             <AlertDialogHeader>
               <AlertDialogTitle className="text-xl font-bold text-foreground">Delete User</AlertDialogTitle>
               <AlertDialogDescription className="text-muted-foreground">
-                Are you sure you want to delete user <span className="font-semibold text-foreground">"{userToDelete?.username}"</span>? 
+                Are you sure you want to delete user <span className="font-semibold text-foreground">"{userToDelete?.username}"</span>?
                 <br />
                 <span className="text-destructive font-medium">This action cannot be undone.</span>
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction 
+              <AlertDialogAction
                 onClick={handleDelete}
                 className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
               >
