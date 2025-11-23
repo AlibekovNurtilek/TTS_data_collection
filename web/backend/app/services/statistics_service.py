@@ -286,85 +286,62 @@ class StatisticsService:
         book_query = self._apply_date_filter(book_query, period, start_date, end_date)
         book_results = book_query.group_by(Book.id, Book.title).all()
         
-        for book_id, book_title, duration, count in book_results:
+        for b_id, b_title, duration, count in book_results:
             book_stats.append(BookStatsItem(
-                book_id=book_id,
-                book_title=book_title,
+                book_id=b_id,
+                book_title=b_title,
                 duration_hours=(duration or 0) / 3600.0,
                 recordings_count=count
             ))
         
-        # Статистика по категориям - оптимизированный запрос
+        # Статистика по категориям
         category_stats = []
         
-        # Если фильтр по категории не применен, показываем все категории (даже без записей)
-        if category_id is None:
-            # Получаем все категории
-            all_categories = self.db.query(Category.id, Category.name).all()
+        # 1. Получаем список категорий (всех или конкретной)
+        categories_query = self.db.query(Category.id, Category.name)
+        if category_id:
+            categories_query = categories_query.filter(Category.id == category_id)
+        categories_to_show = categories_query.all()
             
-            for cat_id, cat_name in all_categories:
-                # Для каждой категории считаем статистику с учетом фильтров
-                category_query = self.db.query(
-                    func.sum(Recording.duration).label('total_duration'),
-                    func.count(Recording.id).label('count')
-                ).join(
-                    Chunk, Recording.chunk_id == Chunk.id
-                ).join(
-                    Book, Chunk.book_id == Book.id
-                ).filter(
-                    Book.category_id == cat_id
-                )
-                
-                # Применяем фильтры
-                if speaker_id:
-                    category_query = category_query.filter(Recording.speaker_id == speaker_id)
-                if book_id:
-                    category_query = category_query.filter(Book.id == book_id)
-                
-                category_query = self._apply_date_filter(category_query, period, start_date, end_date)
-                result = category_query.first()
-                
-                duration = result.total_duration or 0.0 if result else 0.0
-                count = result.count or 0 if result else 0
-                
-                category_stats.append(CategoryStatsItem(
-                    category_id=cat_id,
-                    category_name=cat_name,
-                    duration_hours=duration / 3600.0,
-                    recordings_count=count
-                ))
-        else:
-            # Если фильтр по категории применен, используем оптимизированный запрос
-            category_query = self.db.query(
-                Category.id,
-                Category.name,
-                func.sum(Recording.duration).label('total_duration'),
-                func.count(Recording.id).label('count')
-            ).join(
-                Book, Category.id == Book.category_id
-            ).join(
-                Chunk, Book.id == Chunk.book_id
-            ).join(
-                Recording, Chunk.id == Recording.chunk_id
-            )
+        # 2. Получаем статистику одним запросом (от Recording к Category)
+        stats_query = self.db.query(
+            Category.id,
+            func.sum(Recording.duration).label('total_duration'),
+            func.count(Recording.id).label('count')
+        ).select_from(Recording).join(
+            Chunk, Recording.chunk_id == Chunk.id
+        ).join(
+            Book, Chunk.book_id == Book.id
+        ).join(
+            Category, Book.category_id == Category.id
+        )
+        
+        # Применяем фильтры
+        if speaker_id:
+            stats_query = stats_query.filter(Recording.speaker_id == speaker_id)
+        if book_id:
+            stats_query = stats_query.filter(Book.id == book_id)
+        if category_id:
+            stats_query = stats_query.filter(Category.id == category_id)
             
-            # Применяем фильтры
-            if speaker_id:
-                category_query = category_query.filter(Recording.speaker_id == speaker_id)
-            if book_id:
-                category_query = category_query.filter(Book.id == book_id)
-            category_query = category_query.filter(Category.id == category_id)
-            
-            category_query = self._apply_date_filter(category_query, period, start_date, end_date)
-            category_results = category_query.group_by(Category.id, Category.name).all()
-            
-            for cat_id, cat_name, duration, count in category_results:
-                category_stats.append(CategoryStatsItem(
-                    category_id=cat_id,
-                    category_name=cat_name,
-                    duration_hours=(duration or 0) / 3600.0,
-                    recordings_count=count
-                ))
+        stats_query = self._apply_date_filter(stats_query, period, start_date, end_date)
+        stats_results = stats_query.group_by(Category.id).all()
+        
+        # 3. Создаем словарь для быстрого поиска статистики
+        stats_map = {
+            cat_id: {'duration': duration or 0.0, 'count': count or 0}
+            for cat_id, duration, count in stats_results
+        }
+        
+        # 4. Формируем итоговый список
+        for cat_id, cat_name in categories_to_show:
+            stats = stats_map.get(cat_id, {'duration': 0.0, 'count': 0})
+            category_stats.append(CategoryStatsItem(
+                category_id=cat_id,
+                category_name=cat_name,
+                duration_hours=stats['duration'] / 3600.0,
+                recordings_count=stats['count']
+            ))
         
         return AdminStatisticsResponse(
             total_duration_hours=total_duration_hours,
