@@ -81,7 +81,7 @@ def get_audio_duration(audio_data: bytes) -> float:
 
 def convert_to_wav_16bit_mono(audio_data: bytes, input_format: str = None, filename: str = None) -> bytes:
     """
-    Конвертирует аудио в WAV 16-bit mono формат.
+    Конвертирует аудио в WAV формат с настройками качества из config.
     
     Args:
         audio_data: Байты аудио файла
@@ -89,7 +89,7 @@ def convert_to_wav_16bit_mono(audio_data: bytes, input_format: str = None, filen
         filename: Имя файла (для определения формата, если не указан)
     
     Returns:
-        Байты WAV файла в формате 16-bit mono
+        Байты WAV файла в формате, указанном в настройках (по умолчанию высокое качество)
     """
     try:
         # Определяем формат по содержимому, если не указан
@@ -117,10 +117,17 @@ def convert_to_wav_16bit_mono(audio_data: bytes, input_format: str = None, filen
                     # Auto-detect формат
                     audio = AudioSegment.from_file(io.BytesIO(audio_data))
                 
-                # Конвертируем в моно, 16-bit, 44100 Hz (стандартное качество)
-                audio = audio.set_channels(1)  # Моно
-                audio = audio.set_sample_width(2)  # 16-bit (2 bytes)
-                audio = audio.set_frame_rate(44100)  # 44.1 kHz
+                # Конвертируем с настройками качества из config
+                sample_rate = settings.AUDIO_SAMPLE_RATE
+                bit_depth = settings.AUDIO_BIT_DEPTH
+                channels = settings.AUDIO_CHANNELS
+                
+                # Устанавливаем параметры качества
+                audio = audio.set_channels(channels)
+                # sample_width: 1=8-bit, 2=16-bit, 3=24-bit, 4=32-bit
+                sample_width = (bit_depth + 7) // 8  # Округляем до байтов
+                audio = audio.set_sample_width(sample_width)
+                audio = audio.set_frame_rate(sample_rate)
                 
                 # Экспортируем в WAV
                 wav_buffer = io.BytesIO()
@@ -207,13 +214,32 @@ def convert_to_wav_16bit_mono(audio_data: bytes, input_format: str = None, filen
                 output_file_path = output_file.name
             
             try:
-                # Используем ffmpeg для конвертации
+                # Используем настройки качества из config
+                sample_rate = settings.AUDIO_SAMPLE_RATE
+                bit_depth = settings.AUDIO_BIT_DEPTH
+                channels = settings.AUDIO_CHANNELS
+                
+                # Определяем кодек PCM в зависимости от битности
+                if bit_depth == 8:
+                    pcm_codec = 'pcm_u8'
+                elif bit_depth == 16:
+                    pcm_codec = 'pcm_s16le'
+                elif bit_depth == 24:
+                    pcm_codec = 'pcm_s24le'
+                elif bit_depth == 32:
+                    pcm_codec = 'pcm_s32le'
+                else:
+                    # По умолчанию используем 24-bit для высокого качества
+                    pcm_codec = 'pcm_s24le'
+                    bit_depth = 24
+                
+                # Используем ffmpeg для конвертации с высоким качеством
                 cmd = [
                     'ffmpeg',
                     '-i', input_file_path,
-                    '-acodec', 'pcm_s16le',  # 16-bit PCM
-                    '-ac', '1',  # Моно
-                    '-ar', '44100',  # 44.1 kHz
+                    '-acodec', pcm_codec,  # PCM с указанной битностью
+                    '-ac', str(channels),  # Количество каналов
+                    '-ar', str(sample_rate),  # Частота дискретизации
                     '-y',  # Перезаписать выходной файл
                     output_file_path
                 ]

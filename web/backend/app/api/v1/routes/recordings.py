@@ -27,9 +27,14 @@ async def upload_recording(
     Загрузить аудио запись для чанка (для спикеров).
     
     - **chunk_id**: ID чанка
-    - **audio_file**: Аудио файл (поддерживаются форматы: WAV, MP3, M4A, OGG, FLAC, AAC)
+    - **audio_file**: Аудио файл (поддерживаются форматы: WAV, MP3, M4A, OGG, FLAC, AAC, WEBM, OPUS)
     
-    Аудио будет автоматически конвертировано в WAV 16-bit mono формат.
+    Аудио будет автоматически конвертировано в WAV формат с высоким качеством.
+    Настройки качества (sample rate, bit depth, channels) можно настроить в .env файле:
+    - AUDIO_SAMPLE_RATE (по умолчанию: 48000 Hz)
+    - AUDIO_BIT_DEPTH (по умолчанию: 24-bit)
+    - AUDIO_CHANNELS (по умолчанию: 1 - моно)
+    
     Файл сохраняется в папку wavs/speaker_name с названием book_name_chunk_id.wav
     """
     # Проверяем, что пользователь является спикером

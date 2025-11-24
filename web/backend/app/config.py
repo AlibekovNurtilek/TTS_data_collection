@@ -52,6 +52,20 @@ class Settings(BaseSettings):
         description="Путь к директории для сохранения аудио записей (относительно корня проекта)"
     )
     
+    # Audio Quality Settings - для максимального качества записи
+    AUDIO_SAMPLE_RATE: int = Field(
+        default=48000,
+        description="Частота дискретизации аудио (Hz). Рекомендуется: 48000 (стандарт) или 96000 (максимальное качество)"
+    )
+    AUDIO_BIT_DEPTH: int = Field(
+        default=24,
+        description="Глубина бит аудио. Рекомендуется: 24 (высокое качество) или 32 (максимальное качество)"
+    )
+    AUDIO_CHANNELS: int = Field(
+        default=1,
+        description="Количество каналов: 1 (моно) или 2 (стерео). Для TTS обычно используется моно"
+    )
+    
     @field_validator('CORS_ORIGINS', mode='before')
     @classmethod
     def parse_cors_origins(cls, v):

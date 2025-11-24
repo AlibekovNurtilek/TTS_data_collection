@@ -81,7 +81,8 @@ class RecordingService:
             if ext in ['wav', 'mp3', 'm4a', 'ogg', 'flac', 'aac', 'webm', 'opus']:
                 input_format = ext
         
-        # Конвертируем в WAV 16-bit mono
+        # Конвертируем в WAV с настройками качества из config
+        # По умолчанию: 24-bit, 48kHz, mono (можно настроить в .env)
         wav_data = convert_to_wav_16bit_mono(audio_data, input_format, audio_file.filename)
         
         # Сохраняем файл
