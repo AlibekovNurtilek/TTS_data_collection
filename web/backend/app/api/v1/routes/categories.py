@@ -10,7 +10,7 @@ from app.services.category_service import CategoryService
 router = APIRouter()
 
 
-@router.get("/", response_model=CategoriesPaginatedResponse, status_code=status.HTTP_200_OK)
+@router.get("", response_model=CategoriesPaginatedResponse, status_code=status.HTTP_200_OK)
 async def get_categories(
     pageNumber: int = Query(default=1, ge=1, description="Номер страницы"),
     limit: int = Query(default=100, ge=1, le=1000, description="Количество записей на странице"),
@@ -40,7 +40,7 @@ async def get_category(
     return CategoryResponse.model_validate(category)
 
 
-@router.post("/", response_model=CategoryResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=CategoryResponse, status_code=status.HTTP_201_CREATED)
 async def create_category(
     category_data: CategoryCreate,
     db: Session = Depends(get_db),

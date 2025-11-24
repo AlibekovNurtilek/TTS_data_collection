@@ -11,7 +11,7 @@ from app.services.book_service import BookService
 router = APIRouter()
 
 
-@router.get("/", response_model=BooksPaginatedResponse, status_code=status.HTTP_200_OK)
+@router.get("", response_model=BooksPaginatedResponse, status_code=status.HTTP_200_OK)
 async def get_books(
     pageNumber: int = Query(default=1, ge=1, description="Номер страницы"),
     limit: int = Query(default=100, ge=1, le=1000, description="Количество записей на странице"),
