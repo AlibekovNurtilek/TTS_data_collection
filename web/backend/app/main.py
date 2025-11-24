@@ -10,6 +10,7 @@ from app.core.init_db import init_default_admin
 app = FastAPI(
     title="TTS Data Collection API",
     version="1.0.0",
+    redirect_slashes=False,  # Отключаем автоматический редирект на trailing slash
 )
 
 
