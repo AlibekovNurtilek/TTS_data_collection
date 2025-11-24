@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { booksService } from "@/services/books";
-import { api } from "@/lib/api";
+import { api } from "@/my_lib/api";
 import { Waveform } from "@/components/Waveform";
 import { ChevronLeft, ChevronRight, Play, Pause, ArrowLeft, User } from "lucide-react";
 
@@ -73,7 +73,6 @@ export default function AdminBookRecordings() {
       setRecordings(data);
     } catch (error) {
       toast({
-        title: "Error",
         description: "Failed to load recordings",
         variant: "destructive",
       });
@@ -114,7 +113,6 @@ export default function AdminBookRecordings() {
       setPlayingId(recording.id);
     } catch (error) {
       toast({
-        title: "Error",
         description: error instanceof Error ? error.message : "Failed to load audio",
         variant: "destructive",
       });

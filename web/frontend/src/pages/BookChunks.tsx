@@ -25,8 +25,8 @@ import type { Chunk, Book, SpeakerChunk, BookWithSpeakers, SpeakerInfo } from "@
 import { Pagination } from "@/components/Pagination";
 import { useAppSelector } from "@/store/hooks";
 import { Input } from "@/components/ui/input";
-import { API_BASE_URL } from "@/lib/api";
-import { cn, getAvatarGradient } from "@/lib/utils";
+import { API_BASE_URL } from "@/my_lib/api";
+import { cn, getAvatarGradient } from "@/my_lib/utils";
 
 const DEFAULT_LIMIT = 20;
 
@@ -125,7 +125,6 @@ export default function BookChunks() {
       setBook(bookData);
     } catch (error) {
       toast({
-        title: "Error",
         description: "Failed to load book",
         variant: "destructive",
       });
@@ -138,7 +137,6 @@ export default function BookChunks() {
       setBookWithSpeakers(bookSpeakersData);
     } catch (error) {
       toast({
-        title: "Error",
         description: "Failed to load book speakers",
         variant: "destructive",
       });
@@ -159,7 +157,6 @@ export default function BookChunks() {
       setTotal(response.total);
     } catch (error) {
       toast({
-        title: "Error",
         description: "Failed to load chunks",
         variant: "destructive",
       });
@@ -186,7 +183,6 @@ export default function BookChunks() {
       setTotal(response.total);
     } catch (error) {
       toast({
-        title: "Error",
         description: "Failed to load chunks with recordings",
         variant: "destructive",
       });

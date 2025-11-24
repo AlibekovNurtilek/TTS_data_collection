@@ -32,7 +32,6 @@ export default function SpeakerStatistics() {
       setStatistics(data);
     } catch (error) {
       toast({
-        title: "Ката",
         description: "Статистиканы жүктөөдө ката кетти",
         variant: "destructive",
       });

@@ -1,4 +1,4 @@
-import { api } from "@/lib/api";
+import { api } from "@/my_lib/api";
 import type { Category, CategoryCreate, CategoriesPaginatedResponse } from "@/types";
 
 export const categoriesService = {

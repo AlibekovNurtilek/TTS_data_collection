@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: tts_backend
+    ports:
+      - "8440:8000"
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ../../wavs:/app/wavs
+    networks:
+      - tts_network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: tts_frontend
+    ports:
+      - "8400:80"
+    depends_on:
+      - backend
+    networks:
+      - tts_network
+    restart: unless-stopped
+
+networks:
+  tts_network:
+    driver: bridge
+

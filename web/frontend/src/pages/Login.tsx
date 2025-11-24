@@ -26,7 +26,7 @@ export default function Login() {
       <div className="flex h-screen items-center justify-center bg-gradient-to-br from-[#0066cc] to-[#004999]">
         <div className="text-center">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-white border-t-transparent mx-auto mb-4"></div>
-          <p className="text-white">Loading...</p>
+          <p className="text-white">Жүктөлүүдө...</p>
         </div>
       </div>
     );
@@ -46,13 +46,12 @@ export default function Login() {
       navigate("/");
     } catch (error: unknown) {
       // Извлекаем сообщение об ошибке
-      let errorMessage = "Invalid credentials";
+      let errorMessage = "Туура эмес маалыматтар";
       if (error instanceof Error) {
         errorMessage = error.message || errorMessage;
       }
 
       toast({
-        title: "Login failed",
         description: errorMessage,
         variant: "destructive",
       });
@@ -75,11 +74,11 @@ export default function Login() {
 
           {/* Content */}
           <div className="relative z-10 text-white">
-            <h1 className="text-4xl md:text-5xl font-bold uppercase tracking-[2px] mb-2.5">WELCOME</h1>
+            <h1 className="text-4xl md:text-5xl font-bold uppercase tracking-[2px] mb-2.5">КОШ КЕЛИҢИЗ</h1>
             <h2 className="text-lg md:text-xl font-normal uppercase tracking-[1px] mb-5 opacity-90">TTS Studio</h2>
             <p className="text-sm md:text-base leading-relaxed opacity-80 max-w-[350px]">
-              Professional recording platform for high-quality text-to-speech data collection.
-              Manage your recordings, assignments, and projects with ease.
+              Жогорку сапаттагы текстти үнгө айландыруу үчүн профессионалдуу жазуу платформасы.
+              Жазууларды, тапшырмаларды жана долбоорлорду оңой башкарыңыз.
             </p>
           </div>
         </div>
@@ -87,9 +86,9 @@ export default function Login() {
         {/* Right Panel - Login Form */}
         <div className="w-full md:w-1/2 p-6 md:p-10 lg:p-20 bg-white flex items-center">
           <div className="w-full">
-            <h3 className="text-2xl md:text-3xl lg:text-4xl font-semibold text-[#1a1a1a] mb-2.5">Sign in</h3>
+            <h3 className="text-2xl md:text-3xl lg:text-4xl font-semibold text-[#1a1a1a] mb-2.5">Кирүү</h3>
             <p className="text-xs md:text-[13px] text-[#666] mb-6 md:mb-8">
-              Enter your credentials to access your account
+              Каттоо эсебиңизге кирүү үчүн маалыматтарды киргизиңиз
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-5">
@@ -103,7 +102,7 @@ export default function Login() {
                   required
                   disabled={loading}
                   className="w-full py-3.5 pl-4 pr-4 border border-[#ddd] bg-white text-[#1a1a1a] rounded-lg text-sm focus:outline-none focus:border-[#0066cc]"
-                  placeholder="User Name"
+                  placeholder="Колдонуучу аты"
                 />
               </div>
 
@@ -117,7 +116,7 @@ export default function Login() {
                   required
                   disabled={loading}
                   className="w-full py-3.5 pl-4 pr-16 border border-[#ddd] bg-white text-[#1a1a1a] rounded-lg text-sm focus:outline-none focus:border-[#0066cc]"
-                  placeholder="Password"
+                  placeholder="Сыр сөз"
                 />
                 <button
                   type="button"
@@ -141,14 +140,14 @@ export default function Login() {
                     onCheckedChange={(checked) => setRememberMe(checked === true)}
                     className="w-4 h-4 border-[#ddd]"
                   />
-                  <span>Remember me</span>
+                  <span>Мени эстеп кал</span>
                 </label>
                 <a
                   href="#"
                   className="text-[#0066cc] no-underline font-medium hover:underline transition-all"
                   onClick={(e) => e.preventDefault()}
                 >
-                  Forgot Password?
+                  Сыр сөздү унуттуңузбу?
                 </a>
               </div>
 
@@ -158,7 +157,7 @@ export default function Login() {
                 disabled={loading}
                 className="w-full py-3.5 bg-gradient-to-br from-[#003d7a] to-[#00528a] text-white border-none rounded-lg text-[15px] font-semibold cursor-pointer mb-5 transition-all hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(0,61,122,0.3)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
               >
-                {loading ? "Signing in..." : "Sign in"}
+                {loading ? "Кирүүдө..." : "Кирүү"}
               </button>
 
               {/* Divider */}
@@ -166,7 +165,7 @@ export default function Login() {
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-[#ddd]"></div>
                 </div>
-                <span className="relative px-4 bg-white">Or</span>
+                <span className="relative px-4 bg-white">Же</span>
               </div>
 
               {/* Sign in with other Button */}
@@ -174,19 +173,19 @@ export default function Login() {
                 type="button"
                 className="w-full py-3.5 bg-white text-[#333] border border-[#ddd] rounded-lg text-[15px] font-semibold cursor-pointer transition-all hover:bg-[#f5f5f5] hover:border-[#ccc]"
               >
-                Sign in with other
+                Башка жол менен кирүү
               </button>
             </form>
 
             {/* Footer */}
             <div className="text-center mt-6 text-[13px] text-[#666]">
-              Don't have an account?{" "}
+              Каттоо эсебиңиз жокпу?{" "}
               <a
                 href="#"
                 className="text-[#0066cc] no-underline font-semibold hover:underline transition-all"
                 onClick={(e) => e.preventDefault()}
               >
-                Sign up
+                Катталуу
               </a>
             </div>
           </div>

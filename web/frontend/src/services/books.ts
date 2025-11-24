@@ -1,4 +1,4 @@
-import { api } from "@/lib/api";
+import { api } from "@/my_lib/api";
 import type { Book, BooksPaginatedResponse } from "@/types";
 
 export const booksService = {

@@ -70,7 +70,6 @@ export default function Users() {
       setTotal(data.total);
     } catch (error) {
       toast({
-        title: "Error",
         description: "Failed to load users",
         variant: "destructive",
       });
@@ -91,15 +90,14 @@ export default function Users() {
         role: "speaker", // Всегда создаем как speaker
       });
       toast({
-        title: "Success",
         description: "User created successfully",
+        variant: "success",
       });
       setDialogOpen(false);
       setFormData({ username: "", password: "" });
       loadUsers();
     } catch (error) {
       toast({
-        title: "Error",
         description: error instanceof Error ? error.message : "Failed to create user",
         variant: "destructive",
       });
@@ -111,8 +109,8 @@ export default function Users() {
     try {
       await usersService.deleteUser(userToDelete.id);
       toast({
-        title: "Success",
         description: "User deleted successfully",
+        variant: "success",
       });
       setDeleteDialogOpen(false);
       setUserToDelete(null);
@@ -120,7 +118,6 @@ export default function Users() {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Failed to delete user";
       toast({
-        title: "Error",
         description: errorMessage,
         variant: "destructive",
       });

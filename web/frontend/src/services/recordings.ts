@@ -1,4 +1,4 @@
-import { api } from "@/lib/api";
+import { api } from "@/my_lib/api";
 import type { Recording, RecordingsPaginatedResponse } from "@/types";
 
 export const recordingsService = {

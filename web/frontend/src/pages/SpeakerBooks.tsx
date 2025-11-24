@@ -71,7 +71,6 @@ export default function SpeakerBooks() {
       setCategories(categoriesData.items);
     } catch (error) {
       toast({
-        title: "Ката",
         description: "Категорияларды жүктөөдө ката",
         variant: "destructive",
       });
@@ -88,7 +87,6 @@ export default function SpeakerBooks() {
       setSpeakerData(data);
     } catch (error) {
       toast({
-        title: "Ката",
         description: "Китептерди жүктөөдө ката",
         variant: "destructive",
       });

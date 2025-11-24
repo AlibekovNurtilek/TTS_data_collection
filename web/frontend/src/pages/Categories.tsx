@@ -72,7 +72,6 @@ export default function Categories() {
       setTotal(data.total);
     } catch (error) {
       toast({
-        title: "Error",
         description: "Failed to load categories",
         variant: "destructive",
       });
@@ -91,14 +90,14 @@ export default function Categories() {
       if (editingCategory) {
         await categoriesService.updateCategory(editingCategory.id, formData);
         toast({
-          title: "Success",
           description: "Category updated successfully",
+          variant: "success",
         });
       } else {
         await categoriesService.createCategory(formData);
         toast({
-          title: "Success",
           description: "Category created successfully",
+          variant: "success",
         });
       }
       setDialogOpen(false);
@@ -107,7 +106,6 @@ export default function Categories() {
       loadCategories();
     } catch (error) {
       toast({
-        title: "Error",
         description: error instanceof Error ? error.message : "Operation failed",
         variant: "destructive",
       });
@@ -119,15 +117,14 @@ export default function Categories() {
     try {
       await categoriesService.deleteCategory(categoryToDelete.id);
       toast({
-        title: "Success",
         description: "Category deleted successfully",
+        variant: "success",
       });
       setDeleteDialogOpen(false);
       setCategoryToDelete(null);
       loadCategories();
     } catch (error) {
       toast({
-        title: "Error",
         description: "Failed to delete category",
         variant: "destructive",
       });

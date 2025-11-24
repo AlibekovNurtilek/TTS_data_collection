@@ -5,6 +5,17 @@ import type { ToastActionElement, ToastProps } from "@/components/ui/toast";
 const TOAST_LIMIT = 1;
 const TOAST_REMOVE_DELAY = 1000000;
 
+// Длительность показа тостов в зависимости от варианта
+const getToastDuration = (variant?: string): number => {
+  if (variant === "success" || variant === "default") {
+    return 1000; // 1 секунда для успеха
+  }
+  if (variant === "destructive") {
+    return 3000; // 3 секунды для ошибки
+  }
+  return 1000; // По умолчанию 1 секунда
+};
+
 type ToasterToast = ToastProps & {
   id: string;
   title?: React.ReactNode;
@@ -134,8 +145,20 @@ function dispatch(action: Action) {
 
 type Toast = Omit<ToasterToast, "id">;
 
-function toast({ ...props }: Toast) {
+function toast({ variant, duration, ...props }: Toast) {
+  // Не показываем успешные тосты, только ошибки
+  if (variant === "success") {
+    return {
+      id: "",
+      dismiss: () => {},
+      update: () => {},
+    };
+  }
+
   const id = genId();
+
+  // Автоматически устанавливаем duration на основе варианта, если не указан явно
+  const toastDuration = duration ?? getToastDuration(variant);
 
   const update = (props: ToasterToast) =>
     dispatch({
@@ -148,6 +171,8 @@ function toast({ ...props }: Toast) {
     type: "ADD_TOAST",
     toast: {
       ...props,
+      variant,
+      duration: toastDuration,
       id,
       open: true,
       onOpenChange: (open) => {

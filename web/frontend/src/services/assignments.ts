@@ -1,4 +1,4 @@
-import { api } from "@/lib/api";
+import { api } from "@/my_lib/api";
 import type { BookAssignment, BookAssignmentCreate, BookWithSpeakers, SpeakerWithBooks, User, UsersPaginatedResponse } from "@/types";
 
 export const assignmentsService = {

@@ -1,4 +1,4 @@
-import { api } from "@/lib/api";
+import { api } from "@/my_lib/api";
 import type { SpeakerChunk, SpeakerChunksPaginatedResponse, Book, BookWithStatistics } from "@/types";
 
 export const speakersService = {

@@ -15,7 +15,7 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { speakersService } from "@/services/speakers";
-import { API_BASE_URL } from "@/lib/api";
+import { API_BASE_URL } from "@/my_lib/api";
 import { ArrowLeft, Search, X, CheckCircle2, Circle, RotateCcw } from "lucide-react";
 import type { SpeakerChunk, BookWithStatistics } from "@/types";
 import { Pagination } from "@/components/Pagination";
@@ -67,7 +67,6 @@ export default function SpeakerBookChunks() {
       }
     } catch (error) {
       toast({
-        title: "Error",
         description: "Failed to load book",
         variant: "destructive",
       });
@@ -90,7 +89,6 @@ export default function SpeakerBookChunks() {
       setTotal(response.total);
     } catch (error) {
       toast({
-        title: "Error",
         description: "Failed to load chunks",
         variant: "destructive",
       });

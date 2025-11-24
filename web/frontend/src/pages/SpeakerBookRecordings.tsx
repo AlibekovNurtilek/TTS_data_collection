@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { speakersService } from "@/services/speakers";
 import { recordingsService } from "@/services/recordings";
-import { api } from "@/lib/api";
+import { api } from "@/my_lib/api";
 import { Waveform } from "@/components/Waveform";
 import { ChevronLeft, ChevronRight, Play, Pause, ArrowLeft } from "lucide-react";
 
@@ -61,7 +61,6 @@ export default function SpeakerBookRecordings() {
       setRecordings(data);
     } catch (error) {
       toast({
-        title: "Error",
         description: "Failed to load recordings",
         variant: "destructive",
       });
@@ -73,7 +72,6 @@ export default function SpeakerBookRecordings() {
   const handlePlay = async (recording: SpeakerRecording) => {
     if (!recording.id || !recording.audio_file_path) {
       toast({
-        title: "No recording",
         description: "This chunk has not been recorded yet",
         variant: "destructive",
       });
@@ -111,7 +109,6 @@ export default function SpeakerBookRecordings() {
       setPlayingId(recording.id);
     } catch (error) {
       toast({
-        title: "Error",
         description: error instanceof Error ? error.message : "Failed to load audio",
         variant: "destructive",
       });

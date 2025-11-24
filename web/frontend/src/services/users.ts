@@ -1,4 +1,4 @@
-import { api } from "@/lib/api";
+import { api } from "@/my_lib/api";
 import type { User, UserCreate, UsersPaginatedResponse } from "@/types";
 
 export const usersService = {

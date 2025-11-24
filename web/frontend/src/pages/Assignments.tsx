@@ -39,7 +39,7 @@ import { useToast } from "@/hooks/use-toast";
 import { assignmentsService } from "@/services/assignments";
 import { booksService } from "@/services/books";
 import { Plus, Trash2, X, UserCheck } from "lucide-react";
-import { cn, getAvatarGradient } from "@/lib/utils";
+import { cn, getAvatarGradient } from "@/my_lib/utils";
 import type { Book, User, BookWithSpeakers } from "@/types";
 import { Pagination } from "@/components/Pagination";
 import { useAppSelector } from "@/store/hooks";
@@ -94,7 +94,6 @@ export default function Assignments() {
       setBooksWithSpeakers(booksWithSpeakersData);
     } catch (error) {
       toast({
-        title: "Error",
         description: "Failed to load assignments",
         variant: "destructive",
       });
@@ -115,15 +114,14 @@ export default function Assignments() {
         speaker_id: parseInt(formData.speaker_id),
       });
       toast({
-        title: "Success",
         description: "Book assigned successfully",
+        variant: "success",
       });
       setDialogOpen(false);
       setFormData({ book_id: "", speaker_id: "" });
       loadData();
     } catch (error) {
       toast({
-        title: "Error",
         description: error instanceof Error ? error.message : "Failed to assign book",
         variant: "destructive",
       });
@@ -138,15 +136,14 @@ export default function Assignments() {
         assignmentToDelete.speakerId
       );
       toast({
-        title: "Success",
         description: "Assignment removed successfully",
+        variant: "success",
       });
       setDeleteDialogOpen(false);
       setAssignmentToDelete(null);
       loadData();
     } catch (error) {
       toast({
-        title: "Error",
         description: "Failed to remove assignment",
         variant: "destructive",
       });

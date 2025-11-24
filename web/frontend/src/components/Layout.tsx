@@ -26,7 +26,7 @@ import {
   ChevronRight,
   BarChart3
 } from "lucide-react";
-import { cn, getAvatarGradient } from "@/lib/utils";
+import { cn, getAvatarGradient } from "@/my_lib/utils";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();

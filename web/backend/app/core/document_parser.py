@@ -67,6 +67,7 @@ def extract_text_from_pdf(content: bytes) -> str:
                 for page in pdf.pages:
                     page_text = page.extract_text()
                     if page_text:
+                        # Сохраняем структуру строк для лучшего определения колонтитулов
                         text += page_text + "\n"
             if text.strip():
                 return text
@@ -78,7 +79,9 @@ def extract_text_from_pdf(content: bytes) -> str:
         try:
             pdf_reader = PyPDF2.PdfReader(io.BytesIO(content))
             for page in pdf_reader.pages:
-                text += page.extract_text() + "\n"
+                page_text = page.extract_text()
+                if page_text:
+                    text += page_text + "\n"
         except Exception:
             pass
     
@@ -101,7 +104,18 @@ def extract_text_from_docx(content: bytes) -> str:
     
     try:
         doc = docx.Document(io.BytesIO(content))
-        text = "\n".join([paragraph.text for paragraph in doc.paragraphs])
+        paragraphs = []
+        
+        for paragraph in doc.paragraphs:
+            # Пропускаем пустые параграфы
+            if not paragraph.text.strip():
+                continue
+            
+            # Сохраняем структуру параграфов (каждый параграф на новой строке)
+            paragraphs.append(paragraph.text.strip())
+        
+        # Соединяем параграфы с переносами строк для сохранения структуры
+        text = "\n".join(paragraphs)
         return text
     except Exception as e:
         raise HTTPException(

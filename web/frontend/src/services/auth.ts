@@ -1,4 +1,4 @@
-import { api, API_BASE_URL } from "@/lib/api";
+import { api, API_BASE_URL } from "@/my_lib/api";
 import type { User } from "@/types";
 
 export interface LoginCredentials {

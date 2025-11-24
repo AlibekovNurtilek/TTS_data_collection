@@ -1,4 +1,4 @@
-import { api } from "@/lib/api";
+import { api } from "@/my_lib/api";
 import type { Chunk, ChunksPaginatedResponse, SpeakerChunk, SpeakerChunksPaginatedResponse } from "@/types";
 
 export const chunksService = {

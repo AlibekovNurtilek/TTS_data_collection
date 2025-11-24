@@ -34,7 +34,7 @@ import { booksService } from "@/services/books";
 import { categoriesService } from "@/services/categories";
 import { assignmentsService } from "@/services/assignments";
 import { Plus, Trash2, Upload, BookOpen, FileText, X, FolderOpen, User, Search } from "lucide-react";
-import { cn, getAvatarGradient } from "@/lib/utils";
+import { cn, getAvatarGradient } from "@/my_lib/utils";
 import type { Book, Category, BookWithSpeakers, User as UserType } from "@/types";
 import { Pagination } from "@/components/Pagination";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
@@ -119,7 +119,6 @@ export default function Books() {
       setSpeakers(speakersData.items);
     } catch (error) {
       toast({
-        title: "Error",
         description: "Failed to load filter data",
         variant: "destructive",
       });
@@ -145,7 +144,6 @@ export default function Books() {
       setBooks(booksWithSpeakersData);
     } catch (error) {
       toast({
-        title: "Error",
         description: "Failed to load data",
         variant: "destructive",
       });
@@ -191,7 +189,6 @@ export default function Books() {
 
       if (!validTypes.includes(fileExtension)) {
         toast({
-          title: "Invalid file type",
           description: "Please upload a PDF, DOCX, or TXT file",
           variant: "destructive",
         });
@@ -247,8 +244,8 @@ export default function Books() {
         formData.title
       );
       toast({
-        title: "Success",
         description: "Book uploaded successfully",
+        variant: "success",
       });
       setDialogOpen(false);
       setSelectedFile(null);
@@ -258,7 +255,6 @@ export default function Books() {
       loadData();
     } catch (error) {
       toast({
-        title: "Error",
         description: error instanceof Error ? error.message : "Failed to upload book",
         variant: "destructive",
       });
@@ -272,15 +268,14 @@ export default function Books() {
     try {
       await booksService.deleteBook(bookToDelete.id);
       toast({
-        title: "Success",
         description: "Book deleted successfully",
+        variant: "success",
       });
       setDeleteDialogOpen(false);
       setBookToDelete(null);
       loadData();
     } catch (error) {
       toast({
-        title: "Error",
         description: "Failed to delete book",
         variant: "destructive",
       });

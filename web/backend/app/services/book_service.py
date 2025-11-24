@@ -77,15 +77,36 @@ class BookService:
         book = self.book_repo.create(self.db, new_book)
         
         # Разбиваем текст на чанки
-        chunks_text = split_text_into_chunks(text)
+        try:
+            chunks_text = split_text_into_chunks(text)
+        except Exception as e:
+            # Если не удалось разбить на чанки, удаляем книгу и возвращаем ошибку
+            self.book_repo.delete(self.db, book)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to split text into chunks: {str(e)}"
+            )
         
-        # Создаем чанки
+        # Проверяем, что получились чанки
+        if not chunks_text:
+            # Если чанков нет, удаляем книгу
+            self.book_repo.delete(self.db, book)
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Could not create chunks from document. Document may be empty or invalid."
+            )
+        
+        # Создаем чанки с валидацией
         chunks = []
         for index, chunk_text in enumerate(chunks_text, start=1):
+            # Дополнительная валидация перед созданием
+            if not chunk_text or not chunk_text.strip():
+                continue
+            
             estimated_duration = estimate_reading_time(chunk_text)
             chunk = Chunk(
                 book_id=book.id,
-                text=chunk_text,
+                text=chunk_text.strip(),
                 order_index=index,
                 estimated_duration=estimated_duration
             )
@@ -93,7 +114,22 @@ class BookService:
         
         # Сохраняем чанки в БД
         if chunks:
-            self.chunk_repo.create_bulk(self.db, chunks)
+            try:
+                self.chunk_repo.create_bulk(self.db, chunks)
+            except Exception as e:
+                # Если не удалось сохранить чанки, удаляем книгу
+                self.book_repo.delete(self.db, book)
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Failed to save chunks to database: {str(e)}"
+                )
+        else:
+            # Если не удалось создать валидные чанки, удаляем книгу
+            self.book_repo.delete(self.db, book)
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No valid chunks could be created from the document."
+            )
         
         return book
     

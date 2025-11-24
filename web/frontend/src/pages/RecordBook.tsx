@@ -98,7 +98,6 @@ export default function RecordBook() {
       }
     } catch (error) {
       toast({
-        title: "Error",
         description: "Failed to load book",
         variant: "destructive",
       });
@@ -119,7 +118,6 @@ export default function RecordBook() {
         setChunk(null);
       } else {
         toast({
-          title: "Error",
           description: "Failed to load chunk",
           variant: "destructive",
         });
@@ -209,7 +207,6 @@ export default function RecordBook() {
       recordingStartTimeRef.current = Date.now();
     } catch (error) {
       toast({
-        title: "Error",
         description: "Failed to access microphone",
         variant: "destructive",
       });
@@ -245,8 +242,8 @@ export default function RecordBook() {
       // Если это перезапись - возвращаем на страницу списка чанков с сохраненными параметрами
       if (isRerecording) {
         toast({
-          title: "Success",
           description: "Recording updated successfully!",
+          variant: "success",
         });
 
         // Строим URL с сохраненными параметрами
@@ -265,15 +262,14 @@ export default function RecordBook() {
         navigate(`/speaker/books/${bookId}/chunks${queryString ? `?${queryString}` : ""}`);
       } else {
         toast({
-          title: "Success",
           description: "Recording saved! Loading next chunk...",
+          variant: "success",
         });
         // Автоматически загружаем следующий чанк
         await loadNextChunk();
       }
     } catch (error) {
       toast({
-        title: "Error",
         description: error instanceof Error ? error.message : "Failed to upload recording",
         variant: "destructive",
       });
