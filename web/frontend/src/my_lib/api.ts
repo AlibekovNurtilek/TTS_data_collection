@@ -1,6 +1,8 @@
 import { logger } from './logger';
 
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1";
+// Используем переменную окружения или относительный путь по умолчанию
+// Относительный путь автоматически использует текущий протокол (HTTPS в production)
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api/v1";
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
