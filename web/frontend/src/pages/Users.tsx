@@ -130,7 +130,7 @@ export default function Users() {
   if (loading) {
     return (
       <Layout>
-        <div className="flex items-center justify-center h-full">
+        <div className="flex items-center justify-center min-h-[calc(100vh-4rem)]">
           <div className="text-center">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4"></div>
             <p className="text-muted-foreground">Loading...</p>

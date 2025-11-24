@@ -29,7 +29,7 @@ export default function RecordBook() {
   const [searchParams] = useSearchParams();
   const chunkIdParam = searchParams.get("chunk_id");
   const isRerecording = chunkIdParam !== null;
-  
+
   const [book, setBook] = useState<Book | null>(null);
   const [chunk, setChunk] = useState<SpeakerChunk | null>(null);
   const [isRecording, setIsRecording] = useState(false);
@@ -50,7 +50,7 @@ export default function RecordBook() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { setCurrentBookTitle } = useBook();
-  
+
   // Получаем сохраненное состояние для возврата на страницу списка
   const PAGINATION_KEY = `speakerBookChunks-${bookId}`;
   const savedState = useAppSelector((state) => state.pagination[PAGINATION_KEY]);
@@ -60,7 +60,7 @@ export default function RecordBook() {
       loadBookData();
       loadNextChunk();
     }
-    
+
     // Cleanup: clear book title when leaving the page
     return () => {
       setCurrentBookTitle(null);
@@ -196,7 +196,7 @@ export default function RecordBook() {
           title: "Success",
           description: "Recording updated successfully!",
         });
-        
+
         // Строим URL с сохраненными параметрами
         const params = new URLSearchParams();
         if (savedState?.pageNumber) {
@@ -208,7 +208,7 @@ export default function RecordBook() {
         if (savedState?.search) {
           params.set("search", savedState.search);
         }
-        
+
         const queryString = params.toString();
         navigate(`/speaker/books/${bookId}/chunks${queryString ? `?${queryString}` : ""}`);
       } else {
@@ -241,7 +241,7 @@ export default function RecordBook() {
   if (loading) {
     return (
       <Layout>
-        <div className="flex items-center justify-center h-full">
+        <div className="flex items-center justify-center min-h-[calc(100vh-4rem)]">
           <div className="text-center">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4"></div>
             <p className="text-muted-foreground">Loading next chunk...</p>
@@ -298,17 +298,17 @@ export default function RecordBook() {
           <div className="mb-6 md:mb-8" style={{ minHeight: '180px' }}>
             {audioBlob && !isRecording && audioUrl ? (
               <div className="mt-16">  {/* <<< добавил обёртку + margin-top */}
-              <Waveform
-                audioUrl={audioUrl}
-                isPlaying={isPlaying}
-                onPlayPause={handlePlayPause}
-                onSeek={handleSeek}
-                height={96}
-                waveColor="#f97316"
-                progressColor="#ea580c"
-                cursorColor="#c2410c"
-              />
-            </div>
+                <Waveform
+                  audioUrl={audioUrl}
+                  isPlaying={isPlaying}
+                  onPlayPause={handlePlayPause}
+                  onSeek={handleSeek}
+                  height={96}
+                  waveColor="#f97316"
+                  progressColor="#ea580c"
+                  cursorColor="#c2410c"
+                />
+              </div>
             ) : (
               <RecordingWaveform
                 stream={stream}
@@ -352,10 +352,10 @@ export default function RecordBook() {
 
             {audioBlob && !isRecording && (
               <div className="flex flex-col sm:flex-row items-center gap-3 flex-wrap justify-center w-full px-4">
-                
-                <Button 
-                  onClick={clearRecording} 
-                  size="lg" 
+
+                <Button
+                  onClick={clearRecording}
+                  size="lg"
                   variant="secondary"
                   className="gap-2 h-12 px-4 md:px-6 w-full sm:w-auto sm:min-w-[180px] border-2 border-orange-500/50 dark:border-orange-500/30 rounded-full bg-transparent hover:bg-orange-50 dark:bg-[#1A1A1A] dark:hover:bg-[#2A2A2A] text-orange-600 dark:text-orange-400"
                 >
@@ -363,21 +363,21 @@ export default function RecordBook() {
                   Кайра жаз
                 </Button>
 
-                <Button 
-                  onClick={handlePlayPause} 
-                  size="lg" 
-                  variant="secondary" 
+                <Button
+                  onClick={handlePlayPause}
+                  size="lg"
+                  variant="secondary"
                   className="gap-2 h-12 px-6 md:px-10 w-full sm:w-auto border-2 border-blue-500/50 dark:border-blue-500/30 rounded-full bg-transparent hover:bg-blue-50 dark:bg-[#1A1A1A] dark:hover:bg-[#2A2A2A] text-blue-600 dark:text-blue-400"
                 >
                   {isPlaying ? (
                     <>
                       <Pause className="h-5 w-5" />
-                      
+
                     </>
                   ) : (
                     <>
                       <Play className="h-5 w-5" />
-                      
+
                     </>
                   )}
                 </Button>

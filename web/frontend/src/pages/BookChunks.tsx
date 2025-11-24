@@ -35,7 +35,7 @@ export default function BookChunks() {
   const [searchParams, setSearchParams] = useSearchParams();
   const PAGINATION_KEY = `bookChunks-${bookId}`;
   const paginationState = useAppSelector((state) => state.pagination[PAGINATION_KEY]);
-  
+
   const pageNumber = paginationState?.pageNumber || parseInt(searchParams.get("page") || "1", 10);
   const limit = paginationState?.limit || DEFAULT_LIMIT;
   const [searchInput, setSearchInput] = useState<string>(searchParams.get("search") || "");
@@ -162,7 +162,7 @@ export default function BookChunks() {
 
   const loadSpeakerChunks = async () => {
     if (!selectedSpeakerId) return;
-    
+
     try {
       setLoading(true);
       const response = await chunksService.getBookChunksWithRecordings(
@@ -244,7 +244,7 @@ export default function BookChunks() {
   if (loading) {
     return (
       <Layout>
-        <div className="flex items-center justify-center h-full">
+        <div className="flex items-center justify-center min-h-[calc(100vh-4rem)]">
           <div className="text-center">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4"></div>
             <p className="text-muted-foreground">Loading...</p>
@@ -394,8 +394,8 @@ export default function BookChunks() {
         )}
 
         {/* Dialog для выбора спикера */}
-        <Dialog 
-          open={showSpeakerDialog} 
+        <Dialog
+          open={showSpeakerDialog}
           onOpenChange={(open) => {
             // Не позволяем закрыть диалог без выбора спикера, если спикеров >= 2
             if (!open && bookWithSpeakers && bookWithSpeakers.assigned_speakers.length >= 2 && !selectedSpeakerId) {

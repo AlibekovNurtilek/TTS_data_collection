@@ -7,7 +7,6 @@ from app.dependencies import get_current_admin
 from app.models.user import User
 from app.schemas.chunk import ChunkResponse, ChunksPaginatedResponse, SpeakerChunkResponse, SpeakerChunksPaginatedResponse
 from app.services.chunk_service import ChunkService
-from app.repositories.recording_repository import RecordingRepository
 
 router = APIRouter()
 
@@ -78,7 +77,6 @@ async def get_book_chunks_with_recordings(
     - **filter**: Фильтр по статусу записи (all/recorded/not_recorded)
     """
     chunk_service = ChunkService(db)
-    recording_repo = RecordingRepository()
     
     # ШАГ 1: Получаем ВСЕ чанки книги (без пагинации, но с поиском)
     # Используем большой лимит для получения всех чанков
@@ -89,16 +87,31 @@ async def get_book_chunks_with_recordings(
         search=search
     )
     
+    if not all_chunks:
+        return SpeakerChunksPaginatedResponse(
+            items=[],
+            total=0,
+            pageNumber=pageNumber,
+            limit=limit
+        )
+    
+    # Оптимизация: получаем все записи одним bulk-запросом
+    from app.models.recording import Recording
+    chunk_ids = [chunk.id for chunk in all_chunks]
+    
+    # Один запрос для получения всех записей спикера по этим чанкам
+    recordings = db.query(Recording).filter(
+        Recording.chunk_id.in_(chunk_ids),
+        Recording.speaker_id == speaker_id
+    ).all()
+    
+    # Создаем словарь для быстрого поиска записей
+    recordings_map = {rec.chunk_id: rec for rec in recordings}
+    
     # ШАГ 2: Фильтруем чанки по статусу записи
     filtered_chunks = []
     for chunk in all_chunks:
-        # Проверяем наличие записи от указанного спикера
-        recording = recording_repo.get_by_chunk_and_speaker(
-            db,
-            chunk.id,
-            speaker_id
-        )
-        
+        recording = recordings_map.get(chunk.id)
         is_recorded = recording is not None
         
         # Применяем фильтр

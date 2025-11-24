@@ -6,8 +6,6 @@ from app.models.user import User, UserRole
 from app.repositories.book_assignment_repository import BookAssignmentRepository
 from app.repositories.book_repository import BookRepository
 from app.repositories.user_repository import UserRepository
-from app.repositories.chunk_repository import ChunkRepository
-from app.repositories.recording_repository import RecordingRepository
 from app.schemas.book_assignment import (
     BookWithSpeakersResponse,
     SpeakerWithBooksResponse,
@@ -119,30 +117,47 @@ class BookAssignmentService:
         
         books = self.assignment_repo.get_assignments_by_speaker(self.db, speaker_id)
         
-        # Получаем статистику для каждой книги
-        chunk_repo = ChunkRepository()
-        recording_repo = RecordingRepository()
+        if not books:
+            speaker_data = SpeakerWithBooksResponse.model_validate(speaker)
+            speaker_data.assigned_books = []
+            return speaker_data
         
+        # Оптимизация: получаем всю статистику одним запросом с JOIN
+        from app.models.chunk import Chunk
+        from app.models.recording import Recording
+        from sqlalchemy import func, case
+        
+        book_ids = [book.id for book in books]
+        
+        # Один запрос для получения статистики по всем книгам сразу
+        stats_query = self.db.query(
+            Chunk.book_id,
+            func.count(Chunk.id).label('total_chunks'),
+            func.count(case((Recording.id.isnot(None), 1))).label('recorded_chunks')
+        ).outerjoin(
+            Recording,
+            (Recording.chunk_id == Chunk.id) & (Recording.speaker_id == speaker_id)
+        ).filter(
+            Chunk.book_id.in_(book_ids)
+        ).group_by(Chunk.book_id)
+        
+        stats_results = stats_query.all()
+        
+        # Создаем словарь для быстрого доступа к статистике
+        stats_dict = {
+            book_id: {
+                'total_chunks': total,
+                'recorded_chunks': recorded
+            }
+            for book_id, total, recorded in stats_results
+        }
+        
+        # Формируем ответ
         books_with_stats = []
         for book in books:
-            # Общее количество чанков
-            total_chunks = chunk_repo.count_by_book(self.db, book.id)
-            
-            # Получаем все чанки книги
-            from app.models.chunk import Chunk
-            all_chunks = self.db.query(Chunk).filter(Chunk.book_id == book.id).all()
-            
-            # Подсчитываем записанные чанки
-            recorded_count = 0
-            for chunk in all_chunks:
-                recording = recording_repo.get_by_chunk_and_speaker(
-                    self.db,
-                    chunk.id,
-                    speaker_id
-                )
-                if recording:
-                    recorded_count += 1
-            
+            stats = stats_dict.get(book.id, {'total_chunks': 0, 'recorded_chunks': 0})
+            total_chunks = stats['total_chunks']
+            recorded_count = stats['recorded_chunks']
             unrecorded_count = total_chunks - recorded_count
             progress_percentage = (recorded_count / total_chunks * 100) if total_chunks > 0 else 0.0
             
@@ -180,30 +195,47 @@ class BookAssignmentService:
             search=search
         )
         
-        # Получаем статистику для каждой книги
-        chunk_repo = ChunkRepository()
-        recording_repo = RecordingRepository()
+        if not books:
+            user_data = SpeakerWithBooksResponse.model_validate(user)
+            user_data.assigned_books = []
+            return user_data
         
+        # Оптимизация: получаем всю статистику одним запросом с JOIN
+        from app.models.chunk import Chunk
+        from app.models.recording import Recording
+        from sqlalchemy import func, case
+        
+        book_ids = [book.id for book in books]
+        
+        # Один запрос для получения статистики по всем книгам сразу
+        stats_query = self.db.query(
+            Chunk.book_id,
+            func.count(Chunk.id).label('total_chunks'),
+            func.count(case((Recording.id.isnot(None), 1))).label('recorded_chunks')
+        ).outerjoin(
+            Recording,
+            (Recording.chunk_id == Chunk.id) & (Recording.speaker_id == user_id)
+        ).filter(
+            Chunk.book_id.in_(book_ids)
+        ).group_by(Chunk.book_id)
+        
+        stats_results = stats_query.all()
+        
+        # Создаем словарь для быстрого доступа к статистике
+        stats_dict = {
+            book_id: {
+                'total_chunks': total,
+                'recorded_chunks': recorded
+            }
+            for book_id, total, recorded in stats_results
+        }
+        
+        # Формируем ответ
         books_with_stats = []
         for book in books:
-            # Общее количество чанков
-            total_chunks = chunk_repo.count_by_book(self.db, book.id)
-            
-            # Получаем все чанки книги
-            from app.models.chunk import Chunk
-            all_chunks = self.db.query(Chunk).filter(Chunk.book_id == book.id).all()
-            
-            # Подсчитываем записанные чанки
-            recorded_count = 0
-            for chunk in all_chunks:
-                recording = recording_repo.get_by_chunk_and_speaker(
-                    self.db,
-                    chunk.id,
-                    user_id
-                )
-                if recording:
-                    recorded_count += 1
-            
+            stats = stats_dict.get(book.id, {'total_chunks': 0, 'recorded_chunks': 0})
+            total_chunks = stats['total_chunks']
+            recorded_count = stats['recorded_chunks']
             unrecorded_count = total_chunks - recorded_count
             progress_percentage = (recorded_count / total_chunks * 100) if total_chunks > 0 else 0.0
             

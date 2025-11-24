@@ -50,7 +50,7 @@ export default function Login() {
       if (error instanceof Error) {
         errorMessage = error.message || errorMessage;
       }
-      
+
       toast({
         title: "Login failed",
         description: errorMessage,
@@ -78,7 +78,7 @@ export default function Login() {
             <h1 className="text-4xl md:text-5xl font-bold uppercase tracking-[2px] mb-2.5">WELCOME</h1>
             <h2 className="text-lg md:text-xl font-normal uppercase tracking-[1px] mb-5 opacity-90">TTS Studio</h2>
             <p className="text-sm md:text-base leading-relaxed opacity-80 max-w-[350px]">
-              Professional recording platform for high-quality text-to-speech data collection. 
+              Professional recording platform for high-quality text-to-speech data collection.
               Manage your recordings, assignments, and projects with ease.
             </p>
           </div>

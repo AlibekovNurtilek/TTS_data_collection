@@ -96,20 +96,20 @@ export default function AdminBookRecordings() {
     // Загружаем аудио через API с credentials
     try {
       const blob = await api.getAudioBlob(`/recordings/${recording.id}/audio`);
-      
+
       // Проверяем размер blob - если очень маленький, это может быть проблема
       if (blob.size < 1000) {
         console.warn("Audio file is very small, may have issues playing");
       }
-      
+
       // Создаем URL и ждем немного, чтобы убедиться, что blob готов
       const audioUrl = URL.createObjectURL(blob);
-      
+
       // Для очень коротких файлов добавляем небольшую задержку
       if (recording.duration && recording.duration < 1) {
         await new Promise(resolve => setTimeout(resolve, 100));
       }
-      
+
       setAudioUrls(new Map(audioUrls.set(recording.id, audioUrl)));
       setPlayingId(recording.id);
     } catch (error) {
@@ -158,7 +158,7 @@ export default function AdminBookRecordings() {
   if (loading) {
     return (
       <Layout>
-        <div className="flex items-center justify-center h-full">
+        <div className="flex items-center justify-center min-h-[calc(100vh-4rem)]">
           <div className="text-center">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4"></div>
             <p className="text-muted-foreground">Loading recordings...</p>
@@ -184,7 +184,7 @@ export default function AdminBookRecordings() {
             </Button>
             <h1 className="text-2xl md:text-4xl font-bold text-foreground mb-2">{bookTitle}</h1>
             <p className="text-sm md:text-base text-muted-foreground mb-4">Recordings for this book</p>
-            
+
             {/* Speaker Filter */}
             {recordings && recordings.speakers.length > 0 && (
               <div className="w-full sm:max-w-xs">
@@ -266,7 +266,7 @@ export default function AdminBookRecordings() {
                           audioUrl={audioUrls.get(recording.id)!}
                           isPlaying={playingId === recording.id}
                           onPlayPause={() => handlePlayPause(recording.id)}
-                          onSeek={() => {}}
+                          onSeek={() => { }}
                           height={80}
                         />
                       </div>

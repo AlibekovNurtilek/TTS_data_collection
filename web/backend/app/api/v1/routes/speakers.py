@@ -50,28 +50,24 @@ async def get_my_book(
     book_service = BookService(db)
     book = book_service.get_book_by_id(book_id)
     
-    # Получаем статистику по чанкам
-    chunk_repo = ChunkRepository()
-    recording_repo = RecordingRepository()
-    
-    # Общее количество чанков
-    total_chunks = chunk_repo.count_by_book(db, book_id)
-    
-    # Получаем все чанки книги
+    # Оптимизация: получаем статистику одним запросом с JOIN
     from app.models.chunk import Chunk
-    all_chunks = db.query(Chunk).filter(Chunk.book_id == book_id).all()
+    from app.models.recording import Recording
+    from sqlalchemy import func, case
     
-    # Подсчитываем записанные чанки
-    recorded_count = 0
-    for chunk in all_chunks:
-        recording = recording_repo.get_by_chunk_and_speaker(
-            db,
-            chunk.id,
-            current_user.id
-        )
-        if recording:
-            recorded_count += 1
+    # Один запрос для получения всей статистики
+    stats_result = db.query(
+        func.count(Chunk.id).label('total_chunks'),
+        func.count(case((Recording.id.isnot(None), 1))).label('recorded_chunks')
+    ).outerjoin(
+        Recording,
+        (Recording.chunk_id == Chunk.id) & (Recording.speaker_id == current_user.id)
+    ).filter(
+        Chunk.book_id == book_id
+    ).first()
     
+    total_chunks = stats_result.total_chunks or 0
+    recorded_count = stats_result.recorded_chunks or 0
     unrecorded_count = total_chunks - recorded_count
     progress_percentage = (recorded_count / total_chunks * 100) if total_chunks > 0 else 0.0
     
@@ -135,16 +131,31 @@ async def get_my_book_chunks(
         search=search
     )
     
+    if not all_chunks:
+        return SpeakerChunksPaginatedResponse(
+            items=[],
+            total=0,
+            pageNumber=pageNumber,
+            limit=limit
+        )
+    
+    # Оптимизация: получаем все записи одним bulk-запросом
+    from app.models.recording import Recording
+    chunk_ids = [chunk.id for chunk in all_chunks]
+    
+    # Один запрос для получения всех записей спикера по этим чанкам
+    recordings = db.query(Recording).filter(
+        Recording.chunk_id.in_(chunk_ids),
+        Recording.speaker_id == current_user.id
+    ).all()
+    
+    # Создаем словарь для быстрого поиска записей
+    recordings_map = {rec.chunk_id: rec for rec in recordings}
+    
     # ШАГ 2: Фильтруем чанки по статусу записи
     filtered_chunks = []
     for chunk in all_chunks:
-        # Проверяем наличие записи от текущего спикера
-        recording = recording_repo.get_by_chunk_and_speaker(
-            db,
-            chunk.id,
-            current_user.id
-        )
-        
+        recording = recordings_map.get(chunk.id)
         is_recorded = recording is not None
         
         # Применяем фильтр

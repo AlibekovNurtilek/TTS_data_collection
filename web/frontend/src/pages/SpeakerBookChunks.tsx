@@ -30,7 +30,7 @@ export default function SpeakerBookChunks() {
   const dispatch = useAppDispatch();
   const PAGINATION_KEY = `speakerBookChunks-${bookId}`;
   const paginationState = useAppSelector((state) => state.pagination[PAGINATION_KEY]);
-  
+
   // Восстанавливаем состояние из Redux или используем URL параметры
   const pageNumber = paginationState?.pageNumber || parseInt(searchParams.get("page") || "1", 10);
   const limit = paginationState?.limit || DEFAULT_LIMIT;
@@ -41,8 +41,8 @@ export default function SpeakerBookChunks() {
     paginationState?.search || searchParams.get("search") || ""
   );
   const [filter, setFilter] = useState<"all" | "recorded" | "not_recorded">(
-    (paginationState?.filter as "all" | "recorded" | "not_recorded") || 
-    (searchParams.get("filter") as "all" | "recorded" | "not_recorded") || 
+    (paginationState?.filter as "all" | "recorded" | "not_recorded") ||
+    (searchParams.get("filter") as "all" | "recorded" | "not_recorded") ||
     "all"
   );
 
@@ -57,7 +57,7 @@ export default function SpeakerBookChunks() {
 
   const loadBookData = async () => {
     if (!bookId) return;
-    
+
     try {
       const bookData = await speakersService.getMyBook(parseInt(bookId));
       setBook(bookData);
@@ -76,7 +76,7 @@ export default function SpeakerBookChunks() {
 
   const loadChunks = async () => {
     if (!bookId) return;
-    
+
     try {
       setLoading(true);
       const response = await speakersService.getMyBookChunks(
@@ -106,7 +106,7 @@ export default function SpeakerBookChunks() {
     if (bookId) {
       loadBookData();
     }
-    
+
     // Cleanup: clear book title when leaving the page
     return () => {
       setCurrentBookTitle(null);
@@ -127,13 +127,13 @@ export default function SpeakerBookChunks() {
       if (paginationState.search) {
         params.set("search", paginationState.search);
       }
-      
+
       const currentParams = new URLSearchParams(searchParams);
-      const shouldUpdate = 
+      const shouldUpdate =
         currentParams.get("page") !== params.get("page") ||
         currentParams.get("filter") !== params.get("filter") ||
         currentParams.get("search") !== params.get("search");
-      
+
       // Восстанавливаем только если URL параметры пустые или отличаются от сохраненных
       if (shouldUpdate) {
         setSearchParams(params, { replace: true });
@@ -203,7 +203,7 @@ export default function SpeakerBookChunks() {
   if (loading) {
     return (
       <Layout>
-        <div className="flex items-center justify-center h-full">
+        <div className="flex items-center justify-center min-h-[calc(100vh-4rem)]">
           <div className="text-center">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4"></div>
             <p className="text-muted-foreground">Loading...</p>
@@ -225,8 +225,8 @@ export default function SpeakerBookChunks() {
               <p className="text-sm md:text-base text-muted-foreground">
                 Жалпы прогресс: {book.recorded_chunks} / {book.total_chunks} сүйлөм жаздырылды ({book.progress_percentage}%)
               </p>
-              <Progress 
-                value={book.progress_percentage || 0} 
+              <Progress
+                value={book.progress_percentage || 0}
                 className="h-2 w-full"
               />
             </div>
