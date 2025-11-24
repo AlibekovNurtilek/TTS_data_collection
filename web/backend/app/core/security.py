@@ -25,6 +25,8 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     else:
         expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     
+    # JWT exp должен быть в формате timestamp (число секунд с 1970-01-01)
+    # jose автоматически конвертирует datetime в timestamp, но лучше быть явным
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
@@ -32,11 +34,22 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 
 def verify_token(token: str) -> dict:
     try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        # jose автоматически проверяет exp (expiration) при decode
+        # options={"verify_exp": True} - по умолчанию включено
+        payload = jwt.decode(
+            token, 
+            settings.SECRET_KEY, 
+            algorithms=[settings.ALGORITHM],
+            options={"verify_exp": True}  # Явно включаем проверку expiration
+        )
         return payload
-    except JWTError:
+    except JWTError as e:
+        # Более детальная обработка ошибок для отладки
+        error_detail = "Could not validate credentials"
+        if "expired" in str(e).lower() or "exp" in str(e).lower():
+            error_detail = "Token has expired. Please login again."
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
+            detail=error_detail,
         )
 

@@ -131,9 +131,56 @@ export default function RecordBook() {
 
   const startRecording = async () => {
     try {
-      const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Запрашиваем аудио с максимальным качеством
+      // Попробуем запросить высокое качество, если поддерживается
+      const audioConstraints: MediaTrackConstraints = {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+        // Пытаемся запросить максимальную частоту дискретизации
+        sampleRate: { ideal: 48000, min: 44100 },
+        channelCount: { ideal: 1, min: 1 },
+      };
+
+      const audioStream = await navigator.mediaDevices.getUserMedia({ 
+        audio: audioConstraints 
+      });
       setStream(audioStream);
-      const mediaRecorder = new MediaRecorder(audioStream);
+
+      // Определяем лучший доступный формат для записи
+      let mimeType = 'audio/webm'; // По умолчанию webm (лучшее качество в Chrome)
+      let options: MediaRecorderOptions = {};
+
+      // Проверяем поддерживаемые форматы и выбираем лучший
+      if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+        mimeType = 'audio/webm;codecs=opus';
+        // Opus поддерживает высокое качество
+        options = {
+          mimeType: mimeType,
+          audioBitsPerSecond: 128000, // 128 kbps для высокого качества
+        };
+      } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+        mimeType = 'audio/webm';
+        options = {
+          mimeType: mimeType,
+          audioBitsPerSecond: 128000,
+        };
+      } else if (MediaRecorder.isTypeSupported('audio/ogg;codecs=opus')) {
+        mimeType = 'audio/ogg;codecs=opus';
+        options = {
+          mimeType: mimeType,
+          audioBitsPerSecond: 128000,
+        };
+      } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+        mimeType = 'audio/mp4';
+        options = {
+          mimeType: mimeType,
+          audioBitsPerSecond: 128000,
+        };
+      }
+      // Если ничего не поддерживается, используем настройки по умолчанию
+
+      const mediaRecorder = new MediaRecorder(audioStream, options);
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
 
@@ -144,7 +191,8 @@ export default function RecordBook() {
       };
 
       mediaRecorder.onstop = () => {
-        const blob = new Blob(audioChunksRef.current, { type: "audio/wav" });
+        // Создаем blob с правильным MIME типом
+        const blob = new Blob(audioChunksRef.current, { type: mimeType });
         setAudioBlob(blob);
         const url = URL.createObjectURL(blob);
         setAudioUrl(url);
@@ -153,7 +201,9 @@ export default function RecordBook() {
         setStream(null);
       };
 
-      mediaRecorder.start();
+      // Запускаем запись с интервалом для лучшей производительности
+      // timeslice: 100ms - частота получения данных
+      mediaRecorder.start(100);
       setIsRecording(true);
       setRecordingDuration(0);
       recordingStartTimeRef.current = Date.now();
@@ -187,7 +237,9 @@ export default function RecordBook() {
 
     setUploading(true);
     try {
-      const file = new File([audioBlob], `recording-${Date.now()}.wav`, { type: "audio/wav" });
+      // Сохраняем файл с оригинальным MIME типом (webm/opus и т.д.)
+      // Бэкенд автоматически конвертирует в WAV с высоким качеством
+      const file = new File([audioBlob], `recording-${Date.now()}.webm`, { type: audioBlob.type });
       await recordingsService.uploadRecording(chunk.id, file);
 
       // Если это перезапись - возвращаем на страницу списка чанков с сохраненными параметрами

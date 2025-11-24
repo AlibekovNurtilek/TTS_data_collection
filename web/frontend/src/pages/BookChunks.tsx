@@ -72,8 +72,15 @@ export default function BookChunks() {
       if (!selectedSpeakerId) {
         setShowSpeakerDialog(true);
       }
+    } else if (bookWithSpeakers && bookWithSpeakers.assigned_speakers.length === 1) {
+      // Если спикер ровно один, автоматически выбираем его
+      const singleSpeaker = bookWithSpeakers.assigned_speakers[0];
+      if (selectedSpeakerId !== singleSpeaker.id) {
+        setSelectedSpeakerId(singleSpeaker.id);
+      }
+      setShowSpeakerDialog(false);
     } else {
-      // Если спикеров меньше 2, не показываем диалог и сбрасываем выбранного спикера
+      // Если спикеров нет, сбрасываем выбранного спикера
       setSelectedSpeakerId(null);
       setShowSpeakerDialog(false);
     }
@@ -103,7 +110,8 @@ export default function BookChunks() {
 
   useEffect(() => {
     if (bookId) {
-      if (selectedSpeakerId && bookWithSpeakers && bookWithSpeakers.assigned_speakers.length >= 2) {
+      // Загружаем записи спикера если спикер выбран (независимо от количества спикеров)
+      if (selectedSpeakerId && bookWithSpeakers && bookWithSpeakers.assigned_speakers.length >= 1) {
         loadSpeakerChunks();
       } else {
         loadChunks();
@@ -261,18 +269,25 @@ export default function BookChunks() {
   return (
     <Layout>
       <div className="p-4 md:p-8">
-
         <div className="mb-6 md:mb-8">
-          <div className="flex items-start justify-between gap-4 mb-2">
-            <div className="flex-1">
-              <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">{book?.title}</h1>
+          <div className="flex items-center justify-between gap-4 mb-2">
+            <Button
+              variant="outline"
+              onClick={() => navigate("/books")}
+              className="border-blue-300 bg-blue-50 hover:bg-blue-100 hover:text-black text-blue-700 dark:border-purple-500 dark:bg-purple-900/50 dark:hover:bg-purple-800 dark:text-purple-200"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Books
+            </Button>
+            <div className="flex items-center gap-4">
+              <h1 className="text-2xl md:text-3xl font-bold text-foreground">{book?.title}</h1>
+              {selectedSpeakerId && bookWithSpeakers && bookWithSpeakers.assigned_speakers.length >= 2 && (
+                <Button variant="outline" onClick={handleChangeSpeaker} className="gap-2">
+                  <User className="h-4 w-4" />
+                  Change Speaker
+                </Button>
+              )}
             </div>
-            {selectedSpeakerId && bookWithSpeakers && bookWithSpeakers.assigned_speakers.length >= 2 && (
-              <Button variant="outline" onClick={handleChangeSpeaker} className="gap-2">
-                <User className="h-4 w-4" />
-                Change Speaker
-              </Button>
-            )}
           </div>
           {selectedSpeaker && (
             <div className="flex items-center gap-2 mt-2">

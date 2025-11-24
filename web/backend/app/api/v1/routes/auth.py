@@ -7,6 +7,7 @@ from app.models.user import User
 from app.schemas.auth import LoginRequest
 from app.schemas.user import UserResponse
 from app.services.auth_service import AuthService
+from app.config import settings
 
 router = APIRouter()
 
@@ -21,6 +22,10 @@ async def login(
     user = auth_service.authenticate_user(login_data.username, login_data.password)
     access_token = auth_service.create_token_for_user(user)
     
+    # Устанавливаем время жизни cookie равным времени жизни JWT токена
+    # Конвертируем минуты в секунды для max_age
+    cookie_max_age = settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+    
     response.set_cookie(
         key="access_token",
         value=access_token,
@@ -28,7 +33,7 @@ async def login(
         secure=False,  # Set to True in production with HTTPS
         samesite="lax",
         path="/",
-        max_age=30 * 60  # 30 minutes
+        max_age=cookie_max_age  # Время жизни cookie = времени жизни токена
     )
     
     return {"message": "Login successful", "user": UserResponse.model_validate(user)}
