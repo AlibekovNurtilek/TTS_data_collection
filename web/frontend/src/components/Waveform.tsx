@@ -33,6 +33,7 @@ export function Waveform({
     if (!containerRef.current || !audioUrl) {
       // Очищаем при отсутствии audioUrl
       if (wavesurferRef.current) {
+        wavesurferRef.current.pause();
         wavesurferRef.current.destroy();
         wavesurferRef.current = null;
         setIsReady(false);
@@ -42,6 +43,7 @@ export function Waveform({
 
     // Уничтожаем предыдущий instance если есть
     if (wavesurferRef.current) {
+      wavesurferRef.current.pause();
       wavesurferRef.current.destroy();
     }
 
@@ -107,6 +109,7 @@ export function Waveform({
 
     return () => {
       if (wavesurferRef.current) {
+        wavesurferRef.current.pause();
         wavesurferRef.current.destroy();
         wavesurferRef.current = null;
       }
@@ -114,6 +117,17 @@ export function Waveform({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [audioUrl]); // Зависимости только от audioUrl
+
+  // Дополнительный cleanup при размонтировании компонента
+  useEffect(() => {
+    return () => {
+      if (wavesurferRef.current) {
+        wavesurferRef.current.pause();
+        wavesurferRef.current.destroy();
+        wavesurferRef.current = null;
+      }
+    };
+  }, []);
 
   // Синхронизация воспроизведения
   useEffect(() => {

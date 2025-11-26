@@ -46,6 +46,7 @@ export default function RecordBook() {
   const audioChunksRef = useRef<Blob[]>([]);
   const recordingStartTimeRef = useRef<number>(0);
   const durationIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const audioUrlRef = useRef<string | null>(null); // Для очистки URL при размонтировании
 
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -87,12 +88,37 @@ export default function RecordBook() {
     };
   }, [isRecording]);
 
-  // Cleanup: останавливаем аудио при размонтировании компонента
+  // Cleanup: полная очистка при размонтировании компонента
   useEffect(() => {
     return () => {
+      // Останавливаем воспроизведение
       setIsPlaying(false);
+      
+      // Останавливаем запись если идёт
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        mediaRecorderRef.current.stop();
+      }
+      mediaRecorderRef.current = null;
+      
+      // Очищаем массив аудио-чанков
+      audioChunksRef.current = [];
+      
+      // Освобождаем URL объекта
+      if (audioUrlRef.current) {
+        URL.revokeObjectURL(audioUrlRef.current);
+        audioUrlRef.current = null;
+      }
     };
   }, []);
+  
+  // Cleanup: останавливаем MediaStream при размонтировании или изменении
+  useEffect(() => {
+    return () => {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [stream]);
 
   // Горячие клавиши
   useEffect(() => {
@@ -236,6 +262,7 @@ export default function RecordBook() {
         const blob = new Blob(audioChunksRef.current, { type: mimeType });
         setAudioBlob(blob);
         const url = URL.createObjectURL(blob);
+        audioUrlRef.current = url; // Сохраняем в ref для очистки
         setAudioUrl(url);
         // Останавливаем stream после остановки записи
         audioStream.getTracks().forEach((track) => track.stop());
@@ -331,6 +358,7 @@ export default function RecordBook() {
 
   const clearRecording = () => {
     if (audioUrl) URL.revokeObjectURL(audioUrl);
+    audioUrlRef.current = null;
     setAudioBlob(null);
     setAudioUrl(null);
     setIsPlaying(false);
