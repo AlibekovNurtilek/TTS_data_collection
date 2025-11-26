@@ -87,6 +87,12 @@ export default function RecordBook() {
     };
   }, [isRecording]);
 
+  // Cleanup: останавливаем аудио при размонтировании компонента
+  useEffect(() => {
+    return () => {
+      setIsPlaying(false);
+    };
+  }, []);
 
   const loadBookData = async () => {
     try {
@@ -224,6 +230,11 @@ export default function RecordBook() {
     setIsPlaying(!isPlaying);
   };
 
+  const handleFinish = () => {
+    // Когда аудио закончилось, просто ставим isPlaying в false
+    setIsPlaying(false);
+  };
+
   const handleSeek = (time: number) => {
     // Wavesurfer сам обрабатывает seek, нам нужно только обновить состояние если нужно
     console.log("Seek to:", time);
@@ -231,6 +242,9 @@ export default function RecordBook() {
 
   const handleUpload = async () => {
     if (!audioBlob || !chunk) return;
+
+    // Останавливаем воспроизведение перед загрузкой
+    setIsPlaying(false);
 
     setUploading(true);
     try {
@@ -333,119 +347,119 @@ export default function RecordBook() {
 
   return (
     <Layout>
-      <div className="min-h-full bg-gradient-to-b from-background md:mt-10 to-muted/20 pb-32 md:pb-32">
-        <div className="px-4 md:px-6 py-6 md:py-8 md:mt-10 max-w-8xl mx-auto">
-          {/* Text Content */}
-          <div className="dark:bg-gradient-to-br dark:from-muted/50 dark:to-muted/30 p-4 md:p-8 rounded-xl mb-4">
+      <div className="h-[calc(100vh-4rem)] flex flex-col">
+        {/* Верхняя половина - текст по центру */}
+        <div className="h-1/2 flex items-center justify-center px-4 md:px-6">
+          <div className="dark:bg-gradient-to-br dark:from-muted/50 dark:to-muted/30 p-4 md:p-8 rounded-xl max-w-8xl w-full">
             <p className="text-lg md:text-2xl leading-relaxed text-foreground font-normal tracking-wide text-center">
               {chunk.text}
             </p>
           </div>
-
-          {/* Waveform Visualization - всегда показываем */}
-          <div className="mb-6 md:mb-8" style={{ minHeight: '180px' }}>
-            {audioBlob && !isRecording && audioUrl ? (
-              <div className="mt-16">  {/* <<< добавил обёртку + margin-top */}
-                <Waveform
-                  audioUrl={audioUrl}
-                  isPlaying={isPlaying}
-                  onPlayPause={handlePlayPause}
-                  onSeek={handleSeek}
-                  height={96}
-                  waveColor="#f97316"
-                  progressColor="#ea580c"
-                  cursorColor="#c2410c"
-                />
-              </div>
-            ) : (
-              <RecordingWaveform
-                stream={stream}
-                isRecording={isRecording}
-                duration={recordingDuration}
-              />
-            )}
-          </div>
         </div>
-      </div>
 
-      {/* Fixed Recording Controls - всегда внизу экрана */}
-      <div className="fixed bottom-0 left-0 md:left-72 right-0 h-32 bg-background/95 backdrop-blur-sm z-50">
-        <div className="h-full flex items-center justify-center px-6 max-w-8xl mx-auto">
-          <div className="flex items-center justify-center w-full" style={{ minHeight: '80px' }}>
-            {!isRecording && !audioBlob && (
-              <button
-                onClick={startRecording}
-                className="relative group focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 rounded-full transition-all"
-              >
-                {/* Outer ring */}
-                <div className="w-16 h-16 rounded-full border-4 border-gray-300 dark:border-gray-600 flex items-center justify-center transition-all group-hover:border-gray-400 dark:group-hover:border-gray-500">
-                  {/* Orange circle */}
-                  <div className="w-12 h-12 rounded-full bg-orange-500 transition-all group-hover:scale-110 group-hover:bg-orange-600"></div>
+        {/* Нижняя половина - вейвформа и кнопки по центру */}
+        <div className="h-1/2 flex items-center justify-center px-4 md:px-6">
+          <div className="flex flex-col items-center w-full max-w-8xl" style={{ gap: '40px' }}>
+            {/* Waveform Visualization - фиксированная высота чтобы кнопки были на одном месте */}
+            <div className="w-full h-[260px] flex items-center justify-center">
+              {audioBlob && !isRecording && audioUrl ? (
+                <div className="w-full">
+                  <Waveform
+                    audioUrl={audioUrl}
+                    isPlaying={isPlaying}
+                    onPlayPause={handlePlayPause}
+                    onFinish={handleFinish}
+                    onSeek={handleSeek}
+                    height={96}
+                    waveColor="#f97316"
+                    progressColor="#ea580c"
+                    cursorColor="#c2410c"
+                  />
+                  {/* Резервируем место для секундомера как в RecordingWaveform */}
+                  <div className="mt-4 text-center">
+                    <span className="text-5xl font-normal tracking-wider font-mono tabular-nums text-transparent">
+                      00:00.0
+                    </span>
+                  </div>
                 </div>
-              </button>
-            )}
+              ) : (
+                <RecordingWaveform
+                  stream={stream}
+                  isRecording={isRecording}
+                  duration={recordingDuration}
+                />
+              )}
+            </div>
 
-            {isRecording && (
-              <button
-                onClick={stopRecording}
-                className="relative group focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 rounded-full transition-all"
-              >
-                {/* Outer ring */}
-                <div className="w-16 h-16 rounded-full border-4 border-gray-300 dark:border-gray-600 flex items-center justify-center transition-all group-hover:border-gray-400 dark:group-hover:border-gray-500 animate-pulse">
-                  {/* Orange rounded square */}
-                  <div className="w-8 h-8 rounded-lg bg-orange-500 transition-all group-hover:bg-orange-600"></div>
-                </div>
-              </button>
-            )}
-
-            {audioBlob && !isRecording && (
-              <div className="flex flex-col sm:flex-row items-center gap-3 flex-wrap justify-center w-full px-4">
-
-                <Button
-                  onClick={clearRecording}
-                  size="lg"
-                  variant="secondary"
-                  className="gap-2 h-12 px-4 md:px-6 w-full sm:w-auto sm:min-w-[180px] border-2 border-orange-500/50 dark:border-orange-500/30 rounded-full bg-transparent hover:bg-orange-50 dark:bg-[#1A1A1A] dark:hover:bg-[#2A2A2A] text-orange-600 dark:text-orange-400"
+            {/* Recording Controls */}
+            <div className="flex items-center justify-center w-full">
+              {!isRecording && !audioBlob && (
+                <button
+                  onClick={startRecording}
+                  className="relative group focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 rounded-full transition-all"
                 >
-                  <RotateCcw className="h-5 w-5" />
-                  Кайра жаз
-                </Button>
+                  {/* Outer ring */}
+                  <div className="w-16 h-16 rounded-full border-4 border-gray-300 dark:border-gray-600 flex items-center justify-center transition-all group-hover:border-gray-400 dark:group-hover:border-gray-500">
+                    {/* Orange circle */}
+                    <div className="w-12 h-12 rounded-full bg-orange-500 transition-all group-hover:scale-110 group-hover:bg-orange-600"></div>
+                  </div>
+                </button>
+              )}
 
-                <Button
-                  onClick={handlePlayPause}
-                  size="lg"
-                  variant="secondary"
-                  className="gap-2 h-12 px-6 md:px-10 w-full sm:w-auto border-2 border-blue-500/50 dark:border-blue-500/30 rounded-full bg-transparent hover:bg-blue-50 dark:bg-[#1A1A1A] dark:hover:bg-[#2A2A2A] text-blue-600 dark:text-blue-400"
+              {isRecording && (
+                <button
+                  onClick={stopRecording}
+                  className="relative group focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 rounded-full transition-all"
                 >
-                  {isPlaying ? (
-                    <>
+                  {/* Outer ring */}
+                  <div className="w-16 h-16 rounded-full border-4 border-gray-300 dark:border-gray-600 flex items-center justify-center transition-all group-hover:border-gray-400 dark:group-hover:border-gray-500 animate-pulse">
+                    {/* Orange rounded square */}
+                    <div className="w-8 h-8 rounded-lg bg-orange-500 transition-all group-hover:bg-orange-600"></div>
+                  </div>
+                </button>
+              )}
+
+              {audioBlob && !isRecording && (
+                <div className="flex flex-col sm:flex-row items-center gap-3 flex-wrap justify-center w-full px-4">
+                  <Button
+                    onClick={clearRecording}
+                    size="lg"
+                    variant="secondary"
+                    className="gap-2 h-12 px-4 md:px-6 w-full sm:w-auto sm:min-w-[180px] border-2 border-orange-500/50 dark:border-orange-500/30 rounded-full bg-transparent hover:bg-orange-50 dark:bg-[#1A1A1A] dark:hover:bg-[#2A2A2A] text-orange-600 dark:text-orange-400"
+                  >
+                    <RotateCcw className="h-5 w-5" />
+                    Кайра жаз
+                  </Button>
+
+                  <Button
+                    onClick={handlePlayPause}
+                    size="lg"
+                    variant="secondary"
+                    className="gap-2 h-12 px-6 md:px-10 w-full sm:w-auto border-2 border-blue-500/50 dark:border-blue-500/30 rounded-full bg-transparent hover:bg-blue-50 dark:bg-[#1A1A1A] dark:hover:bg-[#2A2A2A] text-blue-600 dark:text-blue-400"
+                  >
+                    {isPlaying ? (
                       <Pause className="h-5 w-5" />
-
-                    </>
-                  ) : (
-                    <>
+                    ) : (
                       <Play className="h-5 w-5" />
+                    )}
+                  </Button>
 
-                    </>
-                  )}
-                </Button>
-
-
-                <Button
-                  onClick={handleUpload}
-                  size="lg"
-                  variant="secondary"
-                  className="gap-2 h-12 px-4 md:px-6 w-full sm:w-auto sm:min-w-[180px] border-2 border-green-500/50 dark:border-green-500/30 rounded-full bg-transparent hover:bg-green-50 dark:bg-[#1A1A1A] dark:hover:bg-[#2A2A2A] text-green-600 dark:text-green-400"
-                  disabled={uploading}
-                >
-                  <Save className="h-5 w-5" />
-                  <span className="hidden sm:inline">
-                    {uploading ? "Сакталууда..." : (isRerecording ? "Сактоо" : "Сактап, кийинкиге")}
-                  </span>
-                  <span className="sm:hidden">{uploading ? "Сакталууда..." : "Сактоо"}</span>
-                </Button>
-              </div>
-            )}
+                  <Button
+                    onClick={handleUpload}
+                    size="lg"
+                    variant="secondary"
+                    className="gap-2 h-12 px-4 md:px-6 w-full sm:w-auto sm:min-w-[180px] border-2 border-green-500/50 dark:border-green-500/30 rounded-full bg-transparent hover:bg-green-50 dark:bg-[#1A1A1A] dark:hover:bg-[#2A2A2A] text-green-600 dark:text-green-400"
+                    disabled={uploading}
+                  >
+                    <Save className="h-5 w-5" />
+                    <span className="hidden sm:inline">
+                      {uploading ? "Сакталууда..." : (isRerecording ? "Сактоо" : "Сактап, кийинкиге")}
+                    </span>
+                    <span className="sm:hidden">{uploading ? "Сакталууда..." : "Сактоо"}</span>
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

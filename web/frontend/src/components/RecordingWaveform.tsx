@@ -359,14 +359,12 @@ export function RecordingWaveform({
         <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-background to-transparent z-20 pointer-events-none"></div>
       </div>
 
-      {/* Timer Display - показываем только во время записи */}
-      {isRecording && (
-        <div className="mt-4 text-center">
-          <span className="text-5xl font-normal tracking-wider text-foreground font-mono tabular-nums">
-            {formatTime(duration)}
-          </span>
-        </div>
-      )}
+      {/* Timer Display - всегда резервируем место, показываем текст только во время записи */}
+      <div className="mt-4 text-center">
+        <span className={`text-5xl font-normal tracking-wider font-mono tabular-nums ${isRecording ? 'text-foreground' : 'text-transparent'}`}>
+          {formatTime(duration)}
+        </span>
+      </div>
     </div>
   );
 }

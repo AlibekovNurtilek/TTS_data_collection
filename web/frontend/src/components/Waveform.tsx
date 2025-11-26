@@ -5,6 +5,7 @@ interface WaveformProps {
   audioUrl: string | null;
   isPlaying: boolean;
   onPlayPause: () => void;
+  onFinish?: () => void;
   onSeek?: (time: number) => void;
   height?: number;
   waveColor?: string;
@@ -16,6 +17,7 @@ export function Waveform({
   audioUrl,
   isPlaying,
   onPlayPause,
+  onFinish,
   onSeek,
   height = 100,
   waveColor = "#f97316",
@@ -81,8 +83,15 @@ export function Waveform({
     });
 
     wavesurfer.on("finish", () => {
+      // Сбрасываем позицию на начало для следующего воспроизведения
+      wavesurfer.seekTo(0);
       if (!isInternalUpdateRef.current) {
-        onPlayPause();
+        // Используем onFinish если есть, иначе onPlayPause
+        if (onFinish) {
+          onFinish();
+        } else {
+          onPlayPause();
+        }
       }
     });
 
