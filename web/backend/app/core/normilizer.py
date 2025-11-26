@@ -370,8 +370,9 @@ class KyrgyzTextNormalizer:
         
         # === 0. КЫСКАРТУУЛАР (эң биринчи) ===
         # б.з.ч., ж.б., м-н, б-ча ж.б.
+        # НЕ используем IGNORECASE чтобы не путать инициалы (К. Алымбеков) с сокращениями (к. = кылым)
         for abbr, full in sorted(self.short_abbr.items(), key=lambda x: -len(x[0])):
-            result = re.sub(re.escape(abbr), full, result, flags=re.IGNORECASE)
+            result = re.sub(re.escape(abbr), full, result)
         
         # === 1. ТЕЛЕФОН НОМЕРЛЕРИ ===
         # +996 555 123 456

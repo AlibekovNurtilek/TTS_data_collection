@@ -6,135 +6,8 @@
 import re
 from typing import List
 
-
-class KyrgyzTextNormalizer:
-    """Упрощенная версия нормализатора из normilizer.py"""
-    
-    def __init__(self):
-        self.ones = ['', 'бир', 'эки', 'үч', 'төрт', 'беш', 'алты', 'жети', 'сегиз', 'тогуз']
-        self.tens = ['', 'он', 'жыйырма', 'отуз', 'кырк', 'элүү', 'алтымыш', 'жетимиш', 'сексен', 'токсон']
-        self.hundreds = ['', 'жүз', 'эки жүз', 'үч жүз', 'төрт жүз', 'беш жүз', 
-                        'алты жүз', 'жети жүз', 'сегиз жүз', 'тогуз жүз']
-        
-        self.months = {
-            '01': 'январь', '02': 'февраль', '03': 'март', '04': 'апрель',
-            '05': 'май', '06': 'июнь', '07': 'июль', '08': 'август',
-            '09': 'сентябрь', '10': 'октябрь', '11': 'ноябрь', '12': 'декабрь',
-            '1': 'январь', '2': 'февраль', '3': 'март', '4': 'апрель',
-            '5': 'май', '6': 'июнь', '7': 'июль', '8': 'август',
-            '9': 'сентябрь', '10': 'октябрь', '11': 'ноябрь', '12': 'декабрь'
-        }
-        
-        self.short_abbr = {
-            'ж.б.у.с.': 'жана башка ушул сыяктуу',
-            'ж.б.': 'жана башка',
-            'б.з.ч.': 'биздин заманга чейин',
-            'б.з.ч': 'биздин заманга чейин',
-            'б.з.': 'биздин заман',
-            'кк.': 'кылымдар',
-            'жж.': 'жылдар',
-            'к.': 'кылым',
-            'көч.': 'көчөсү',
-            'м-н': 'менен',
-            'б-ча': 'боюнча',
-            'ж-а': 'жана',
-            'т.б.': 'тагыраак болсо',
-            'ө.к.': 'өңдүү көп',
-            'б.а.': 'башкача айтканда',
-            'мис.': 'мисалы',
-        }
-        
-        self.kyrgyz_abbr = {
-            'КР': 'кыргыз республикасы',
-            'КТЖ': 'кыргыз темир жолу',
-            'ЖОЖ': 'жогорку окуу жайы',
-            'КМШ': 'көз карандысыз мамлекеттердин шериктештиги',
-            'ААК': 'ачык акционердик коом',
-            'ЖЧК': 'жоопкерчилиги чектелген коом',
-            'БУУ': 'бириккен улуттар уюму',
-            'АКШ': 'америка кошмо штаттары',
-            'СССР': 'советтик социалисттик республикалар союзу',
-        }
-        
-        self.english_abbr = {
-            'IT': 'ай ти', 'AI': 'эй ай', 'GPU': 'жи пи ю', 'CPU': 'си пи ю',
-            'URL': 'ю ар эл', 'PDF': 'пи ди эф', 'USB': 'ю эс би',
-            'WiFi': 'вай фай', 'GPS': 'жи пи эс', 'SMS': 'эс эм эс',
-            'TV': 'ти ви', 'OK': 'окей',
-        }
-        
-        self.units = {
-            'км': 'километр', 'м': 'метр', 'см': 'сантиметр', 'мм': 'миллиметр',
-            'кг': 'килограмм', 'г': 'грамм', 'л': 'литр', 'мл': 'миллилитр',
-            'га': 'гектар', 'км²': 'квадрат километр', 'м²': 'квадрат метр',
-        }
-
-    def number_to_words(self, num: int) -> str:
-        if num == 0:
-            return 'нөл'
-        if num < 0:
-            return 'минус ' + self.number_to_words(abs(num))
-        
-        result = ''
-        
-        if num >= 1000000000:
-            billions = num // 1000000000
-            result += self.number_to_words(billions) + ' миллиард '
-            num %= 1000000000
-        
-        if num >= 1000000:
-            millions = num // 1000000
-            result += self.number_to_words(millions) + ' миллион '
-            num %= 1000000
-        
-        if num >= 1000:
-            thousands = num // 1000
-            result += self.number_to_words(thousands) + ' миң '
-            num %= 1000
-        
-        if num >= 100:
-            result += self.hundreds[num // 100] + ' '
-            num %= 100
-        
-        if num >= 10:
-            result += self.tens[num // 10] + ' '
-            num %= 10
-        
-        if num > 0:
-            result += self.ones[num] + ' '
-        
-        return result.strip()
-
-    def normalize(self, text: str) -> str:
-        result = text
-        
-        # Кыскартуулар
-        for abbr, full in sorted(self.short_abbr.items(), key=lambda x: -len(x[0])):
-            result = re.sub(re.escape(abbr), full, result, flags=re.IGNORECASE)
-        
-        # Аббревиатуралар
-        for abbr, full in self.kyrgyz_abbr.items():
-            result = re.sub(r'\b' + re.escape(abbr) + r'\b', full, result)
-        
-        for abbr, full in self.english_abbr.items():
-            result = re.sub(r'\b' + re.escape(abbr) + r'\b', full, result)
-        
-        # Өлчөм бирдиктери
-        for unit, name in sorted(self.units.items(), key=lambda x: -len(x[0])):
-            result = re.sub(
-                r'(\d+)\s*' + re.escape(unit) + r'\b',
-                lambda m, n=name: f"{self.number_to_words(int(m.group(1)))} {n}",
-                result
-            )
-        
-        # Сандарды сөзгө
-        result = re.sub(
-            r'\b(\d+)\b',
-            lambda m: self.number_to_words(int(m.group(1))),
-            result
-        )
-        
-        return result
+# Импортируем полный нормализатор
+from app.core.normilizer import KyrgyzTextNormalizer
 
 
 # Глобальный экземпляр нормализатора
@@ -142,7 +15,7 @@ _normalizer = KyrgyzTextNormalizer()
 
 
 # Кириллица (кыргызский + русский) + допустимые знаки препинания
-ALLOWED_CHARS_PATTERN = re.compile(r'[^а-яА-ЯөүңӨҮҢёЁ\s.,!?;:\-–—]')
+ALLOWED_CHARS_PATTERN = re.compile(r'[^а-яА-ЯөүңӨҮҢёЁ\s.,!?;:\-]')
 
 # Паттерн для URL
 URL_PATTERN = re.compile(
@@ -223,11 +96,32 @@ def _count_words(text: str) -> int:
 def _split_into_sentences(text: str) -> List[str]:
     """
     Разбивает текст на предложения.
+    НЕ разбивает по точке после инициалов (В., А., Т. и т.д.)
     """
+    # Временно защищаем инициалы от разбиения
+    # Заменяем "X. " (одна буква + точка + пробел) на "X<DOT>"
+    # Паттерн: заглавная буква + точка + пробел + заглавная буква (начало имени/фамилии)
+    protected = re.sub(
+        r'([А-ЯӨҮҢЁA-Z])\.\s+(?=[А-ЯӨҮҢЁA-Z])',
+        r'\1<DOT>',
+        text
+    )
+    
+    # Также защищаем сокращения типа "г." (город), "ул." (улица), "др." и т.д.
+    protected = re.sub(r'\b(г|ул|пр|д|кв|стр|корп|оф|тел|факс|др|проф|доц|акад)\.\s+', r'\1<DOT>', protected, flags=re.IGNORECASE)
+    
     # Разделяем по точке, восклицательному и вопросительному знакам
-    # Но сохраняем знак в предложении
-    sentences = re.split(r'(?<=[.!?])\s+', text)
-    return [s.strip() for s in sentences if s.strip()]
+    sentences = re.split(r'(?<=[.!?])\s+', protected)
+    
+    # Восстанавливаем точки с пробелами
+    result = []
+    for s in sentences:
+        s = s.replace('<DOT>', '. ')
+        s = s.strip()
+        if s:
+            result.append(s)
+    
+    return result
 
 
 def _split_long_sentence(sentence: str, max_words: int) -> List[str]:
@@ -271,7 +165,8 @@ def _split_long_sentence(sentence: str, max_words: int) -> List[str]:
 
 def _merge_short_sentences(sentences: List[str], min_words: int, max_words: int) -> List[str]:
     """
-    Объединяет слишком короткие предложения.
+    Объединяет ТОЛЬКО слишком короткие предложения (< min_words).
+    Предложения с min_words+ слов остаются отдельными чанками.
     """
     if not sentences:
         return []
@@ -289,34 +184,31 @@ def _merge_short_sentences(sentences: List[str], min_words: int, max_words: int)
         combined_words = _count_words(current + " " + sentence) if current else sentence_words
         
         if not current:
+            # Начинаем новый чанк
             current = sentence
-        elif combined_words <= max_words:
-            # Можем объединить
+        elif current_words < min_words and combined_words <= max_words:
+            # Текущий чанк слишком короткий - объединяем
+            current = current + " " + sentence
+        elif sentence_words < min_words and combined_words <= max_words:
+            # Новое предложение слишком короткое - объединяем
             current = current + " " + sentence
         else:
-            # Не можем объединить, сохраняем текущий
-            if current_words >= min_words or not result:
-                result.append(current)
-            elif result:
-                # Слишком короткий - добавляем к предыдущему если возможно
-                prev_words = _count_words(result[-1])
-                if prev_words + current_words <= max_words:
-                    result[-1] = result[-1] + " " + current
-                else:
-                    result.append(current)
+            # Оба достаточно длинные - сохраняем текущий, начинаем новый
+            result.append(current)
             current = sentence
     
     # Добавляем последний чанк
     if current:
         current_words = _count_words(current)
-        if current_words >= min_words or not result:
-            result.append(current)
-        elif result:
+        # Если последний чанк слишком короткий, пробуем добавить к предыдущему
+        if current_words < min_words and result:
             prev_words = _count_words(result[-1])
             if prev_words + current_words <= max_words:
                 result[-1] = result[-1] + " " + current
             else:
                 result.append(current)
+        else:
+            result.append(current)
     
     return result
 
@@ -394,7 +286,7 @@ def split_text_into_chunks(
         chunk = chunk.strip()
         
         # Убираем висящие знаки препинания в начале
-        chunk = re.sub(r'^[.,;:\-–—\s]+', '', chunk)
+        chunk = re.sub(r'^[.,;:\-\s]+', '', chunk)
         
         if chunk and _has_letters(chunk):
             result.append(chunk)
