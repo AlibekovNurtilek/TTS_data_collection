@@ -94,6 +94,43 @@ export default function RecordBook() {
     };
   }, []);
 
+  // Горячие клавиши
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Игнорируем если фокус на input/textarea
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      if (e.code === "Space") {
+        e.preventDefault(); // Предотвращаем скролл страницы
+        
+        if (!isRecording && !audioBlob) {
+          // Стадия 1: начать запись
+          startRecording();
+        } else if (isRecording) {
+          // Стадия 2: остановить запись
+          stopRecording();
+        } else if (audioBlob && !isRecording) {
+          // Стадия 3: плей/пауза
+          handlePlayPause();
+        }
+      }
+
+      if (e.code === "Enter") {
+        e.preventDefault();
+        
+        // Стадия 3: сохранить и отправить
+        if (audioBlob && !isRecording && !uploading) {
+          handleUpload();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isRecording, audioBlob, uploading, isPlaying]);
+
   const loadBookData = async () => {
     try {
       const bookData = await speakersService.getMyBook(parseInt(bookId!));
