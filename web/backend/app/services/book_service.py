@@ -8,7 +8,7 @@ from app.repositories.book_repository import BookRepository
 from app.repositories.chunk_repository import ChunkRepository
 from app.repositories.category_repository import CategoryRepository
 from app.core.document_parser import parse_document
-from app.core.text_processor import split_text_into_chunks, estimate_reading_time
+from app.core.text_processor import split_text_into_chunks
 
 
 class BookService:
@@ -103,7 +103,7 @@ class BookService:
             if not chunk_text or not chunk_text.strip():
                 continue
             
-            estimated_duration = estimate_reading_time(chunk_text)
+            estimated_duration = 0
             chunk = Chunk(
                 book_id=book.id,
                 text=chunk_text.strip(),

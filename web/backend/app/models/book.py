@@ -13,7 +13,7 @@ class Book(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False, index=True)
     original_filename = Column(String, nullable=False)
-    file_type = Column(String, nullable=False)  # pdf, docx, txt
+    file_type = Column(String, nullable=False)  # txt
     category_id = Column(Integer, ForeignKey("categories.id"), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

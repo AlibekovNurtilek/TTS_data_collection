@@ -183,13 +183,12 @@ export default function Books() {
 
   const handleFileSelect = (file: File) => {
     if (file) {
-      // Проверяем тип файла
-      const validTypes = ['.pdf', '.docx', '.txt'];
+      // Проверяем тип файла - только TXT
       const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
 
-      if (!validTypes.includes(fileExtension)) {
+      if (fileExtension !== '.txt') {
         toast({
-          description: "Please upload a PDF, DOCX, or TXT file",
+          description: "Please upload a TXT file only",
           variant: "destructive",
         });
         return;
@@ -389,7 +388,7 @@ export default function Books() {
               <DialogContent className="sm:max-w-lg">
                 <DialogHeader>
                   <DialogTitle className="text-2xl font-bold">Upload New Book</DialogTitle>
-                  <p className="text-sm text-muted-foreground mt-1">Upload PDF, DOCX, or TXT files</p>
+                  <p className="text-sm text-muted-foreground mt-1">Upload TXT files only</p>
                 </DialogHeader>
                 <form onSubmit={handleUpload} className="space-y-4 mt-4">
                   {/* Drag and Drop Zone */}
@@ -410,7 +409,7 @@ export default function Books() {
                     <input
                       ref={fileInputRef}
                       type="file"
-                      accept=".pdf,.docx,.txt"
+                      accept=".txt"
                       onChange={handleFileInputChange}
                       className="hidden"
                       required={!selectedFile}
@@ -458,7 +457,7 @@ export default function Books() {
                             or click to browse
                           </p>
                           <p className="text-xs text-muted-foreground mt-2">
-                            Supports: PDF, DOCX, TXT
+                            Supports: TXT only
                           </p>
                         </div>
                       </div>
