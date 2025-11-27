@@ -228,3 +228,4 @@ __pypackages__/
 *.sublime-project
 *.sublime-workspace
 
+postgres_data/
